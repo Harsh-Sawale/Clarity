@@ -99,7 +99,7 @@ src/
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/clarity.git
+git clone https://github.com/Harsh-Sawale/clarity.git
 cd clarity
 
 # Install dependencies
