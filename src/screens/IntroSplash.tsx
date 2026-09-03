@@ -95,7 +95,7 @@ export const IntroSplash: React.FC<IntroSplashProps> = ({ onFinish }) => {
         <View style={styles.footerBlock}>
           <Text style={styles.madeByLabel}>MADE BY</Text>
           <Text style={styles.authorName}>Harsh Sawale</Text>
-          <Text style={styles.version}>v1.0.0</Text>
+          <Text style={styles.version}>v1.2.0</Text>
         </View>
       </Animated.View>
     </Animated.View>

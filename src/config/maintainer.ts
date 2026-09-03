@@ -15,8 +15,8 @@ export interface MaintainerConfig {
 export const MAINTAINER_CONFIG: MaintainerConfig = {
   appName: 'Clarity',
   tagline: 'Ephemeral Camera & Sandboxed Visual Scratchpad',
-  version: '1.0.0',
-  buildNumber: '100',
+  version: '1.2.0',
+  buildNumber: '120',
   license: 'MIT',
   githubUsername: 'Harsh-Sawale',
   repositoryName: 'Clarity',

@@ -60,19 +60,28 @@ jobs:
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
         with:
-          tag_name: v1.0.0
-          name: Clarity v1.0.0 - Standalone Android APK
+          tag_name: v1.2.0
+          name: Clarity v1.2.0 - Standalone Android APK
           body: |
-            ### Clarity v1.0.0 Official Release
+            ### Clarity v1.2.0 Official Release
 
-            Minimalist, sandboxed, 100% offline ephemeral camera for Android.
+            Chunky iOS-style liquid glass design, high-density list & grid viewing modes, multi-select batch photo manager, and customizable timers.
 
-            #### How to Install on Your Phone:
-            1. Download `Clarity.apk` below directly to your Android device.
-            2. Tap the downloaded file to install (allow install from browser if prompted).
-            3. Enjoy full private scratchpad photography with zero cloud sync!
+            #### What's New in v1.2.0:
+            * **Chunky Liquid Glass UI:** Larger, more tactile buttons with iOS specular highlights and spring compression feedback.
+            * **List & Grid Layouts:** Switch between compact list rows and visual 2-column image cards with one tap.
+            * **Multi-Select Batch Management:** Select multiple or all photos at once to batch-extend (+2H), batch-keep, or batch-delete.
+            * **28px Touch-Safe Checkboxes:** High-visibility circular checkboxes that are effortless to tap.
+            * **Custom Lifespan Timers:** Set any photo expiration from 1 minute up to 7 full days (1 week).
+            * **24-Hour Safety Net:** Expired photos wait in the 24-hour Trash before deletion.
+            * **New Handcrafted Launch Screen:** Geometric lens aperture icon with creator attribution.
+
+            #### How to Install:
+            1. Download `Clarity.apk` below directly to your phone.
+            2. Tap the file in notifications / downloads to install.
+            3. Enjoy full offline, privacy-first scratch photography!
 
             #### Built by:
             Harsh Sawale (@Harsh-Sawale)
