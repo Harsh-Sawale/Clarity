@@ -1,111 +1,236 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
-import { Colors, Spacing, Typography } from '../theme/colors';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Animated,
+  Dimensions,
+} from 'react-native';
 
 interface IntroSplashProps {
   onFinish: () => void;
 }
 
+const { width } = Dimensions.get('window');
+
 export const IntroSplash: React.FC<IntroSplashProps> = ({ onFinish }) => {
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.96)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.92)).current;
+  const logoRotate = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Fade in
+    // Elegant entrance animation
     Animated.parallel([
-      Animated.timing(opacityAnim, {
+      Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 450,
+        duration: 350,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
-        speed: 15,
-        bounciness: 4,
+        friction: 7,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+      Animated.timing(logoRotate, {
+        toValue: 1,
+        duration: 800,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Fade out after 1.4s
+    // Smooth exit animation after 1.3 seconds
     const timer = setTimeout(() => {
-      Animated.timing(opacityAnim, {
+      Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 350,
+        duration: 280,
         useNativeDriver: true,
       }).start(() => {
         onFinish();
       });
-    }, 1400);
+    }, 1300);
 
     return () => clearTimeout(timer);
-  }, [onFinish, opacityAnim, scaleAnim]);
+  }, [fadeAnim, scaleAnim, logoRotate, onFinish]);
+
+  const spin = logoRotate.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['-15deg', '0deg'],
+  });
 
   return (
-    <Animated.View style={[styles.container, { opacity: opacityAnim }]}>
-      <View style={styles.centerBox}>
-        <Animated.Text style={[styles.title, { transform: [{ scale: scaleAnim }] }]}>
-          CLARITY
-        </Animated.Text>
-        <View style={styles.line} />
-        <Text style={styles.subtitle}>EPHEMERAL SCRATCHPAD FOR ANDROID</Text>
-      </View>
+    <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+      <Animated.View
+        style={[
+          styles.contentContainer,
+          {
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        {/* Minimalist Camera Lens Logo */}
+        <Animated.View style={[styles.logoContainer, { transform: [{ rotate: spin }] }]}>
+          <View style={styles.outerLens}>
+            <View style={styles.midLens}>
+              <View style={styles.innerCore} />
+            </View>
+            {/* Viewfinder crosshairs */}
+            <View style={styles.notchTop} />
+            <View style={styles.notchBottom} />
+            <View style={styles.notchLeft} />
+            <View style={styles.notchRight} />
+          </View>
+        </Animated.View>
 
-      <View style={styles.footerBox}>
-        <Text style={styles.footerAuthor}>Made by Harsh</Text>
-        <Text style={styles.footerVersion}>Version 1.0.0 • Open Source</Text>
-      </View>
+        {/* Brand & Creator Center Block */}
+        <View style={styles.textBlock}>
+          <Text style={styles.appName}>CLARITY</Text>
+          <View style={styles.badgePill}>
+            <Text style={styles.badgeText}>OPEN SOURCE PROJECT</Text>
+          </View>
+          <Text style={styles.tagline}>The Offline Scratchpad Camera</Text>
+        </View>
+
+        {/* Personal Creator Tag */}
+        <View style={styles.footerBlock}>
+          <Text style={styles.madeByLabel}>MADE BY</Text>
+          <Text style={styles.authorName}>Harsh Sawale</Text>
+          <Text style={styles.version}>v1.0.0</Text>
+        </View>
+      </Animated.View>
     </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  overlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: Colors.background,
-    zIndex: 9999,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  centerBox: {
-    flex: 1,
+    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 999,
   },
-  title: {
-    fontSize: 34,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    letterSpacing: 8,
-  },
-  line: {
-    width: 48,
-    height: 2,
-    backgroundColor: Colors.borderLight,
-    marginVertical: Spacing.md,
-  },
-  subtitle: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    letterSpacing: 2,
-    fontSize: 11,
-  },
-  footerBox: {
+  contentContainer: {
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    width: width * 0.85,
+    gap: 28,
   },
-  footerAuthor: {
+  logoContainer: {
+    width: 88,
+    height: 88,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outerLens: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0A0A0E',
+  },
+  midLens: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#121218',
+  },
+  innerCore: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  notchTop: {
+    position: 'absolute',
+    top: -4,
+    width: 8,
+    height: 2,
+    backgroundColor: '#FFFFFF',
+  },
+  notchBottom: {
+    position: 'absolute',
+    bottom: -4,
+    width: 8,
+    height: 2,
+    backgroundColor: '#FFFFFF',
+  },
+  notchLeft: {
+    position: 'absolute',
+    left: -4,
+    width: 2,
+    height: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  notchRight: {
+    position: 'absolute',
+    right: -4,
+    width: 2,
+    height: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  textBlock: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  appName: {
+    fontSize: 32,
+    fontWeight: '900',
+    letterSpacing: 8,
+    color: '#FFFFFF',
+  },
+  badgePill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 2,
+    color: '#D4D4D8',
+  },
+  tagline: {
+    fontSize: 13,
+    color: '#71717A',
+    letterSpacing: 0.5,
+    marginTop: 2,
+  },
+  footerBlock: {
+    alignItems: 'center',
+    gap: 2,
+    marginTop: 16,
+  },
+  madeByLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 2,
+    color: '#52525B',
+  },
+  authorName: {
     fontSize: 14,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    letterSpacing: 0.6,
+    fontWeight: '700',
+    color: '#E4E4E7',
+    letterSpacing: 1,
   },
-  footerVersion: {
-    ...Typography.caption,
-    color: Colors.textMuted,
+  version: {
+    fontSize: 11,
+    color: '#3F3F46',
+    marginTop: 4,
+    letterSpacing: 1,
   },
 });

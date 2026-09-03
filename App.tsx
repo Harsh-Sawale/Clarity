@@ -13,21 +13,12 @@ import { moveToKeepers, permanentlyDelete } from './src/services/storage';
 type ActiveView = 'camera' | 'gallery' | 'settings';
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState<boolean>(false);
+  const [showSplash, setShowSplash] = useState<boolean>(true);
   const [currentView, setCurrentView] = useState<ActiveView>('camera');
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    // Only display opening splash ONCE on first-ever launch
-    AsyncStorage.getItem('@clarity_seen_splash_v1').then((seen) => {
-      if (!seen) {
-        setShowSplash(true);
-      }
-    });
-  }, []);
 
   const changeView = (nextView: ActiveView) => {
     // Liquid cross-dissolve with spring scale

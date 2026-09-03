@@ -85,16 +85,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           style={styles.backBtn}
         />
         <View style={styles.headerTitles}>
-          <Text style={styles.title}>CUSTOMIZATION & SETTINGS</Text>
-          <Text style={styles.subtitle}>Precision control over your camera and storage</Text>
+          <Text style={styles.title}>SETTINGS & TWEAKS</Text>
+          <Text style={styles.subtitle}>Customize your camera, timers, and storage</Text>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Section 1: Default Lifespan Duration */}
+        {/* Section 1: Default Timer */}
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>DEFAULT LIFESPAN FOR NEW PHOTOS</Text>
-          <Text style={styles.cardHelp}>The timer preset automatically selected after taking a photo.</Text>
+          <Text style={styles.cardLabel}>DEFAULT AUTO-DELETE TIMER</Text>
+          <Text style={styles.cardHelp}>The lifespan automatically picked whenever you snap a photo.</Text>
           <View style={styles.pillsRow}>
             {[
               { label: '15M', val: 15 * 60 * 1000 },
@@ -115,11 +115,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           </View>
         </View>
 
-        {/* Section 2: Safety Net Duration */}
+        {/* Section 2: Trash Recovery Window */}
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>GRACE LOUNGE SAFETY NET</Text>
+          <Text style={styles.cardLabel}>TRASH RECOVERY WINDOW</Text>
           <Text style={styles.cardHelp}>
-            How long expired photos wait in the safety lounge before unrecoverable physical disk erasure.
+            How long expired photos stay in the trash before being permanently erased from your phone.
           </Text>
           <View style={styles.pillsRow}>
             {[
@@ -139,11 +139,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           </View>
         </View>
 
-        {/* Section 3: Camera Optics & Aspect Ratio */}
+        {/* Section 3: Camera Optics */}
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>CAMERA HARDWARE SENSOR RATIO</Text>
+          <Text style={styles.cardLabel}>CAMERA SENSOR RATIO</Text>
           <Text style={styles.cardHelp}>
-            4:3 uses the pure optical sensor with zero wide-angle distortion. 16:9 fills wider screens.
+            4:3 uses the standard optical lens with no wide-angle distortion. 16:9 fills the full screen.
           </Text>
           <View style={styles.pillsRow}>
             {[
@@ -162,15 +162,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           </View>
         </View>
 
-        {/* Section 4: Compression Quality */}
+        {/* Section 4: Compression */}
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>SCRATCHPAD COMPRESSION</Text>
+          <Text style={styles.cardLabel}>PHOTO QUALITY & STORAGE SAVING</Text>
           <Text style={styles.cardHelp}>
-            Compressing photos saves local space while preserving crisp readability for text and barcodes.
+            Balanced saves phone space while keeping receipts and text pin-sharp.
           </Text>
           <View style={styles.pillsRow}>
             {[
-              { label: 'ULTRA (65%)', val: 0.65 },
+              { label: 'COMPACT (65%)', val: 0.65 },
               { label: 'BALANCED (85%)', val: 0.85 },
               { label: 'MAX (100%)', val: 1.0 },
             ].map((item) => (
@@ -186,10 +186,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           </View>
         </View>
 
-        {/* Section 5: Haptic Feedback */}
+        {/* Section 5: Haptics */}
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>TACTILE HAPTIC VIBRATION</Text>
-          <Text style={styles.cardHelp}>Mechanical vibration response when tapping buttons and shutter.</Text>
+          <Text style={styles.cardLabel}>HAPTIC VIBRATION</Text>
+          <Text style={styles.cardHelp}>Physical vibration click when tapping buttons and the shutter.</Text>
           <View style={styles.pillsRow}>
             {[
               { label: 'OFF', val: 'off' as const },
@@ -208,13 +208,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           </View>
         </View>
 
-        {/* Section 6: Reclaimed Storage & Nuclear Clean */}
+        {/* Section 6: Reclaimed Storage */}
         <View style={styles.dangerCard}>
-          <Text style={styles.dangerCardLabel}>STORAGE RECLAIMED & DANGER ZONE</Text>
+          <Text style={styles.dangerCardLabel}>STORAGE RECLAIMED & RESET</Text>
           <View style={styles.metricRow}>
             <View>
               <Text style={styles.metricBig}>{metrics.reclaimedCount}</Text>
-              <Text style={styles.metricSub}>Photos Cleansed</Text>
+              <Text style={styles.metricSub}>Auto-Cleaned</Text>
             </View>
             <View style={styles.metricDivider} />
             <View>
@@ -223,21 +223,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
             </View>
           </View>
           <GlassButton
-            title="NUCLEAR CLEAN (WIPE ALL DATA)"
+            title="WIPE ALL STORAGE & RESET"
             size="md"
             onPress={handleNuclearWipe}
             style={styles.nuclearBtn}
           />
         </View>
 
-        {/* Section 7: Open Source Attribution & GitHub Links */}
+        {/* Section 7: Authentic Creator Story */}
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>OPEN SOURCE REPOSITORY & AUTHOR</Text>
-          <Text style={styles.authorName}>{MAINTAINER_CONFIG.authorName}</Text>
-          <Text style={styles.authorBio}>{MAINTAINER_CONFIG.authorBio}</Text>
+          <Text style={styles.cardLabel}>ABOUT THE DEVELOPER</Text>
+          <Text style={styles.authorName}>Harsh Sawale</Text>
+          <Text style={styles.authorBio}>
+            I built Clarity because my phone was constantly running out of cloud storage from receipts, parking tickets, and Wi-Fi stickers that I only needed for 20 minutes. Clarity keeps temporary photos 100% offline, out of your main camera roll, and deletes them automatically when you're done. No ads, no cloud sync, and 100% open source.
+          </Text>
           <View style={styles.linkRow}>
             <GlassButton
-              title="VIEW SOURCE ON GITHUB"
+              title="SOURCE CODE ON GITHUB"
               size="sm"
               isActive
               onPress={() => openUrl(MAINTAINER_CONFIG.repositoryUrl)}

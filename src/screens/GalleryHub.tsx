@@ -236,7 +236,7 @@ export const GalleryHub: React.FC<GalleryHubProps> = ({
         {/* Liquid Glass Segment Slider */}
         <View style={styles.tabBar}>
           <GlassButton
-            title={`EXPIRING (${currentTab === 'active' ? photos.length : ''})`}
+            title={`PHOTOS (${currentTab === 'active' ? photos.length : ''})`}
             size="sm"
             isActive={currentTab === 'active'}
             onPress={() => {
@@ -247,7 +247,7 @@ export const GalleryHub: React.FC<GalleryHubProps> = ({
             style={styles.tabItem}
           />
           <GlassButton
-            title="24H GRACE"
+            title="TRASH (24H)"
             size="sm"
             isActive={currentTab === 'grace'}
             onPress={() => {
@@ -258,7 +258,7 @@ export const GalleryHub: React.FC<GalleryHubProps> = ({
             style={styles.tabItem}
           />
           <GlassButton
-            title="KEEPERS"
+            title="SAVED FOREVER"
             size="sm"
             isActive={currentTab === 'keeper'}
             onPress={() => {
@@ -366,17 +366,17 @@ export const GalleryHub: React.FC<GalleryHubProps> = ({
           <View style={styles.emptyContainer}>
             <Text style={Typography.titleMedium}>
               {currentTab === 'active'
-                ? 'No Expiring Notes'
+                ? 'Camera Roll is Clean'
                 : currentTab === 'grace'
-                ? 'Grace Lounge is Empty'
-                : 'No Keepers Stored'}
+                ? 'Trash is Empty'
+                : 'No Saved Photos'}
             </Text>
             <Text style={[Typography.bodyMedium, styles.emptySubtext]}>
               {currentTab === 'active'
-                ? 'Your scratchpad is empty. Tap Back to Camera to snap a temporary photo.'
+                ? 'No temporary photos right now. Snap a photo and it will appear here.'
                 : currentTab === 'grace'
-                ? 'Photos that expire will wait here for recovery before being wiped.'
-                : 'Photos you chose to keep permanently are stored here safely.'}
+                ? 'Expired photos sit here for 24 hours just in case you need them back.'
+                : 'Any temporary photo you choose to keep forever will be safely stored here.'}
             </Text>
             {currentTab === 'active' && (
               <GlassButton
