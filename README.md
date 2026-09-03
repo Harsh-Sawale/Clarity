@@ -7,6 +7,15 @@
 [![Engine: React_Native_Expo](https://img.shields.io/badge/Framework-Expo_SDK_57-black.svg?style=flat-square)](https://expo.dev)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict-black.svg?style=flat-square)](https://www.typescriptlang.org/)
 [![Network: Zero_Permissions](https://img.shields.io/badge/Network-Zero_Permissions-black.svg?style=flat-square)](#privacy-guarantee)
+[![Download APK](https://img.shields.io/badge/Download-Android_APK-success.svg?style=flat-square)](https://github.com/Harsh-Sawale/Clarity/releases/latest)
+
+---
+
+### [Download Clarity for Android (.APK)](https://github.com/Harsh-Sawale/Clarity/releases/latest)
+Get the standalone, installable app for your phone:
+1. Tap [Download Clarity.apk](https://github.com/Harsh-Sawale/Clarity/releases/latest).
+2. Install the APK directly on any Android phone (Android 8.0 through Android 15).
+3. No accounts, no setup, 100% offline.
 
 ---
 
@@ -20,20 +29,21 @@ Modern smartphones suffer from camera roll pollution. Users frequently capture t
 
 ## Key Capabilities
 
-### 1. Viewfinder & Immediate Action
-* **Instant Shutter:** Low-latency hardware capture via Camera2 backend.
-* **Elastic Preview Sheet:** Post-capture preview card for fast inspection.
-* **Lifespan Presets:** Immediate duration assignment (30 minutes, 2 hours, 6 hours, 24 hours, or custom duration).
-* **Category Tagging:** Assign fast contextual tags (`Parking`, `Receipt`, `Pass`, `Note`) to automate default expiration times.
+### 1. Viewfinder & Immersive Shutter
+* **Hardware Capture:** Locked to normal optical 4:3 ratio to avoid wide-angle lens distortion.
+* **Dual Zoom Modes:** Fluid two-finger pinch-to-zoom + 1-tap `[ 1x ]` `[ 2x ]` `[ 3x ]` zoom selector pills.
 * **Inspection Torch:** Persistent toggle for dark environments (behind desks, under hoods, dim parking garages).
+* **Flip Camera:** Instant toggle between front and rear cameras.
 
-### 2. The Limbo (Active Gallery)
-* Masonry grid displaying active temporary items.
-* Real-time vector countdown indicators showing time remaining.
-* Instant actions: Keep permanently in Vault, share directly, or delete immediately.
+### 2. Lifespan Engine (1 Minute to 1 Week)
+* **Instant Presets:** Assign durations with one tap (`30m`, `2h`, `6h`, `24h`).
+* **Custom Precision Timer:** Flexible slider allowing any duration from 1 minute up to 7 full days (1 week).
+* **Optional Memo:** Attach quick text notes (Wi-Fi passwords, parking pillars, receipt tags) directly to photos.
 
-### 3. The Crypt (Grace Period)
-* Expired items move into a 24-hour safety lounge before permanent disk zeroing.
+### 3. Vault & Albums Hub
+* **Expiring Notes:** Active temporary scratchpad displaying live countdown timers.
+* **Grace Lounge (24H Net):** Safety holding zone for expired photos, preventing anxiety from accidental deletions with 1-tap restoration.
+* **Keepers:** Sandboxed permanent archive for photos you decide to keep indefinitely without polluting Google Photos or the system camera roll.
 * Prevents accidental data loss without cluttering active headspace.
 
 ### 4. The Vault (Permanent Keeps)
