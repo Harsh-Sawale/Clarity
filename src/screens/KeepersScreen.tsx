@@ -13,38 +13,38 @@ import { Header } from '../components/Header';
 import { PhotoCard } from '../components/PhotoCard';
 import { getPhotosByStatus, permanentlyDelete } from '../services/storage';
 
-interface VaultScreenProps {
+interface KeepersScreenProps {
   onSelectPhoto: (item: PhotoItem) => void;
 }
 
-export const VaultScreen: React.FC<VaultScreenProps> = ({ onSelectPhoto }) => {
+export const KeepersScreen: React.FC<KeepersScreenProps> = ({ onSelectPhoto }) => {
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  const loadVault = useCallback(async () => {
-    const items = await getPhotosByStatus('vault');
+  const loadKeepers = useCallback(async () => {
+    const items = await getPhotosByStatus('keeper');
     setPhotos(items);
   }, []);
 
   useEffect(() => {
-    loadVault();
-  }, [loadVault]);
+    loadKeepers();
+  }, [loadKeepers]);
 
   const onRefresh = async () => {
     setIsRefreshing(true);
-    await loadVault();
+    await loadKeepers();
     setIsRefreshing(false);
   };
 
   const handleDelete = async (item: PhotoItem) => {
-    Alert.alert('Delete Vault Item', 'Remove this permanently saved item from the Vault?', [
+    Alert.alert('Remove Keeper', 'Permanently remove this photo from your keepers?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
           await permanentlyDelete(item.id);
-          await loadVault();
+          await loadKeepers();
         },
       },
     ]);
@@ -53,15 +53,15 @@ export const VaultScreen: React.FC<VaultScreenProps> = ({ onSelectPhoto }) => {
   return (
     <View style={styles.container}>
       <Header
-        title="The Vault"
-        subtitle={`${photos.length} permanent sandboxed items`}
+        title="Keepers"
+        subtitle={`${photos.length} permanently saved photos`}
       />
 
-      <View style={styles.infoBanner}>
-        <Text style={styles.infoTitle}>LOCAL ARCHIVE</Text>
-        <Text style={styles.infoBody}>
-          Items stored here do not expire and will not be automatically deleted. They remain
-          isolated in Clarity's private sandbox without cluttering your system gallery.
+      <View style={styles.banner}>
+        <Text style={styles.bannerTitle}>SANDBOXED PERMANENT ARCHIVE</Text>
+        <Text style={styles.bannerText}>
+          Photos stored here never expire. They remain private inside Clarity without mixing into
+          your main camera roll or cluttering Google Photos.
         </Text>
       </View>
 
@@ -80,18 +80,18 @@ export const VaultScreen: React.FC<VaultScreenProps> = ({ onSelectPhoto }) => {
           <PhotoCard
             item={item}
             onPress={() => onSelectPhoto(item)}
-            primaryActionLabel="Inspect"
+            primaryActionLabel="View"
             onPrimaryAction={() => onSelectPhoto(item)}
-            secondaryActionLabel="Delete"
+            secondaryActionLabel="Remove"
             onSecondaryAction={() => handleDelete(item)}
           />
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={Typography.titleMedium}>Vault is Empty</Text>
+            <Text style={Typography.titleMedium}>No Keepers Stored</Text>
             <Text style={[Typography.bodyMedium, styles.emptySubtext]}>
-              No photos stored in your permanent archive. Tap 'Vault' on any Limbo photo to keep it
-              indefinitely.
+              When you decide a temporary photo is worth keeping indefinitely, tap 'Keep' to save
+              it here.
             </Text>
           </View>
         }
@@ -105,20 +105,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  infoBanner: {
+  banner: {
     backgroundColor: Colors.surface,
     padding: Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
+    gap: 4,
   },
-  infoTitle: {
+  bannerTitle: {
     ...Typography.badge,
     color: Colors.textSecondary,
-    marginBottom: 4,
+    fontSize: 10,
   },
-  infoBody: {
+  bannerText: {
     ...Typography.bodyMedium,
     color: Colors.textMuted,
+    fontSize: 12,
     lineHeight: 18,
   },
   listContent: {
@@ -128,7 +130,7 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 80,
+    paddingVertical: 90,
     paddingHorizontal: Spacing.lg,
   },
   emptySubtext: {

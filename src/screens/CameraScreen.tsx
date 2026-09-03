@@ -3,26 +3,27 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   SafeAreaView,
+  Platform,
+  StatusBar as RNStatusBar,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-
-type CameraFacing = 'front' | 'back';
 import { Colors, Spacing, Typography } from '../theme/colors';
 import { ShutterButton } from '../components/ShutterButton';
+import { TactileButton } from '../components/TactileButton';
 import { PreviewModal } from './PreviewModal';
 import { saveCapturedPhoto } from '../services/storage';
-import { CategoryTag } from '../types';
+
+type CameraFacing = 'front' | 'back';
 
 interface CameraScreenProps {
   onPhotoSaved: () => void;
-  onNavigateToLimbo: () => void;
+  onNavigateToActive: () => void;
 }
 
 export const CameraScreen: React.FC<CameraScreenProps> = ({
   onPhotoSaved,
-  onNavigateToLimbo,
+  onNavigateToActive,
 }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<CameraFacing>('back');
@@ -40,18 +41,17 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({
     return (
       <SafeAreaView style={styles.permissionContainer}>
         <View style={styles.permissionCard}>
-          <Text style={Typography.titleLarge}>Camera Access Required</Text>
+          <Text style={Typography.titleLarge}>Camera Access Needed</Text>
           <Text style={[Typography.bodyMedium, styles.permissionDescription]}>
-            Clarity needs camera access to capture temporary visual scratch notes. All photos remain
-            100% sandboxed on your device and are never synced to any server.
+            Clarity needs camera access to capture temporary visual notes. Everything stays
+            100% on this phone and is never sent to any server.
           </Text>
-          <TouchableOpacity
+          <TactileButton
+            title="Grant Camera Access"
             onPress={requestPermission}
             style={styles.permissionButton}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.permissionButtonText}>Grant Camera Access</Text>
-          </TouchableOpacity>
+            textStyle={styles.permissionButtonText}
+          />
         </View>
       </SafeAreaView>
     );
@@ -63,7 +63,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({
     try {
       setIsCapturing(true);
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
+        quality: 0.85,
         skipProcessing: true,
       });
 
@@ -79,23 +79,19 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({
 
   const handleConfirmSave = async (
     durationMs: number,
-    tag?: CategoryTag,
+    groupName?: string,
     note?: string
   ) => {
     if (capturedUri) {
       await saveCapturedPhoto({
         tempUri: capturedUri,
         durationMs,
-        tag,
+        groupName,
         note,
       });
       setCapturedUri(null);
       onPhotoSaved();
     }
-  };
-
-  const handleRetake = () => {
-    setCapturedUri(null);
   };
 
   const toggleTorch = () => {
@@ -115,40 +111,38 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({
         enableTorch={torch}
       >
         <SafeAreaView style={styles.hudOverlay}>
-          {/* Top Control Bar */}
+          {/* Top Control Bar - Extra notch clearance */}
           <View style={styles.topControls}>
-            <TouchableOpacity
+            <TactileButton
               onPress={toggleTorch}
-              style={[styles.pillButton, torch && styles.pillButtonActive]}
-              activeOpacity={0.7}
+              style={[styles.circleButton, torch && styles.circleButtonActive]}
             >
-              <Text style={[styles.pillButtonText, torch && styles.pillButtonTextActive]}>
-                Torch: {torch ? 'ON' : 'OFF'}
+              <Text style={[styles.circleButtonText, torch && styles.circleButtonTextActive]}>
+                {torch ? 'TORCH ON' : 'TORCH'}
               </Text>
-            </TouchableOpacity>
+            </TactileButton>
 
-            <TouchableOpacity
-              onPress={toggleFacing}
-              style={styles.pillButton}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.pillButtonText}>Flip</Text>
-            </TouchableOpacity>
+            <View style={styles.centerBrandPill}>
+              <Text style={styles.brandText}>CLARITY</Text>
+            </View>
+
+            <TactileButton onPress={toggleFacing} style={styles.circleButton}>
+              <Text style={styles.circleButtonText}>FLIP</Text>
+            </TactileButton>
           </View>
 
-          {/* Bottom Shutter & Navigation Bar */}
+          {/* Bottom Shutter & Navigation Bar with dedicated non-overlapping zones */}
           <View style={styles.bottomControls}>
-            <TouchableOpacity
-              onPress={onNavigateToLimbo}
-              style={styles.trayButton}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.trayButtonText}>Limbo</Text>
-            </TouchableOpacity>
+            <TactileButton onPress={onNavigateToActive} style={styles.galleryJumpButton}>
+              <Text style={styles.galleryJumpText}>EXPIRING</Text>
+            </TactileButton>
 
-            <ShutterButton onPress={handleCapture} disabled={isCapturing} />
+            <View style={styles.shutterCenterBox}>
+              <ShutterButton onPress={handleCapture} disabled={isCapturing} />
+            </View>
 
-            <View style={{ width: 60 }} />
+            {/* Balancer spacing block so shutter stays exactly centered */}
+            <View style={styles.galleryJumpSpacer} />
           </View>
         </SafeAreaView>
       </CameraView>
@@ -158,11 +152,13 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({
         visible={!!capturedUri}
         photoUri={capturedUri}
         onConfirm={handleConfirmSave}
-        onRetake={handleRetake}
+        onRetake={() => setCapturedUri(null)}
       />
     </View>
   );
 };
+
+const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0;
 
 const styles = StyleSheet.create({
   container: {
@@ -176,51 +172,80 @@ const styles = StyleSheet.create({
   hudOverlay: {
     flex: 1,
     justifyContent: 'space-between',
-    padding: Spacing.md,
+    paddingTop: statusBarHeight + 12,
+    paddingBottom: 24,
+    paddingHorizontal: Spacing.md,
   },
   topControls: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: Spacing.sm,
+    alignItems: 'center',
+    width: '100%',
   },
-  pillButton: {
-    backgroundColor: Colors.overlay,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.border,
+  circleButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    minWidth: 74,
   },
-  pillButtonActive: {
+  circleButtonActive: {
     backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
   },
-  pillButtonText: {
+  circleButtonText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
     color: Colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.4,
   },
-  pillButtonTextActive: {
+  circleButtonTextActive: {
     color: Colors.background,
+  },
+  centerBrandPill: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  brandText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 3,
+    color: Colors.textSecondary,
   },
   bottomControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingBottom: Spacing.lg,
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: Spacing.xs,
   },
-  trayButton: {
-    backgroundColor: Colors.overlay,
+  galleryJumpButton: {
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.border,
+    paddingVertical: 12,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    width: 90,
   },
-  trayButtonText: {
+  galleryJumpText: {
     color: Colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  shutterCenterBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  galleryJumpSpacer: {
+    width: 90,
   },
   permissionContainer: {
     flex: 1,
@@ -234,7 +259,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
-    gap: 12,
+    gap: 14,
   },
   permissionDescription: {
     lineHeight: 22,
@@ -243,13 +268,13 @@ const styles = StyleSheet.create({
   permissionButton: {
     backgroundColor: Colors.textPrimary,
     paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
+    borderRadius: 10,
     marginTop: 8,
   },
   permissionButtonText: {
     color: Colors.background,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.4,
   },
 });

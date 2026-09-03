@@ -3,33 +3,36 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
   SafeAreaView,
+  Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Colors, Spacing, Typography } from './src/theme/colors';
+import { Colors, Spacing } from './src/theme/colors';
 import { CameraScreen } from './src/screens/CameraScreen';
-import { LimboScreen } from './src/screens/LimboScreen';
-import { CryptScreen } from './src/screens/CryptScreen';
-import { VaultScreen } from './src/screens/VaultScreen';
+import { ActiveScreen } from './src/screens/ActiveScreen';
+import { GraceScreen } from './src/screens/GraceScreen';
+import { KeepersScreen } from './src/screens/KeepersScreen';
 import { InfoScreen } from './src/screens/InfoScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { PhotoDetailModal } from './src/screens/PhotoDetailModal';
+import { IntroSplash } from './src/screens/IntroSplash';
+import { TactileButton } from './src/components/TactileButton';
 import { PhotoItem } from './src/types';
-import { moveToVault, permanentlyDelete } from './src/services/storage';
+import { moveToKeepers, permanentlyDelete } from './src/services/storage';
 
-type Tab = 'camera' | 'limbo' | 'crypt' | 'vault' | 'info' | 'settings';
+type Tab = 'camera' | 'active' | 'grace' | 'keepers' | 'info' | 'settings';
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<Tab>('camera');
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
 
   const handlePhotoSaved = () => {
-    setActiveTab('limbo');
+    setActiveTab('active');
   };
 
-  const handleVaultPhoto = async (item: PhotoItem) => {
-    await moveToVault(item.id);
+  const handleKeepPhoto = async (item: PhotoItem) => {
+    await moveToKeepers(item.id);
   };
 
   const handleDeletePhoto = async (item: PhotoItem) => {
@@ -42,20 +45,20 @@ export default function App() {
         return (
           <CameraScreen
             onPhotoSaved={handlePhotoSaved}
-            onNavigateToLimbo={() => setActiveTab('limbo')}
+            onNavigateToActive={() => setActiveTab('active')}
           />
         );
-      case 'limbo':
+      case 'active':
         return (
-          <LimboScreen
+          <ActiveScreen
             onNavigateToCamera={() => setActiveTab('camera')}
             onSelectPhoto={(photo) => setSelectedPhoto(photo)}
           />
         );
-      case 'crypt':
-        return <CryptScreen onSelectPhoto={(photo) => setSelectedPhoto(photo)} />;
-      case 'vault':
-        return <VaultScreen onSelectPhoto={(photo) => setSelectedPhoto(photo)} />;
+      case 'grace':
+        return <GraceScreen onSelectPhoto={(photo) => setSelectedPhoto(photo)} />;
+      case 'keepers':
+        return <KeepersScreen onSelectPhoto={(photo) => setSelectedPhoto(photo)} />;
       case 'info':
         return <InfoScreen />;
       case 'settings':
@@ -72,13 +75,12 @@ export default function App() {
       {/* Main Content Area */}
       <View style={styles.contentArea}>{renderScreen()}</View>
 
-      {/* Bottom Navigation Bar */}
+      {/* Floating Bottom Navigation Dock with zero overlap */}
       <SafeAreaView style={styles.navBarContainer}>
         <View style={styles.navBar}>
-          <TouchableOpacity
+          <TactileButton
             onPress={() => setActiveTab('camera')}
             style={[styles.navTab, activeTab === 'camera' && styles.navTabActive]}
-            activeOpacity={0.7}
           >
             <Text
               style={[
@@ -88,57 +90,53 @@ export default function App() {
             >
               CAMERA
             </Text>
-          </TouchableOpacity>
+          </TactileButton>
 
-          <TouchableOpacity
-            onPress={() => setActiveTab('limbo')}
-            style={[styles.navTab, activeTab === 'limbo' && styles.navTabActive]}
-            activeOpacity={0.7}
+          <TactileButton
+            onPress={() => setActiveTab('active')}
+            style={[styles.navTab, activeTab === 'active' && styles.navTabActive]}
           >
             <Text
               style={[
                 styles.navText,
-                activeTab === 'limbo' ? styles.navTextActive : styles.navTextInactive,
+                activeTab === 'active' ? styles.navTextActive : styles.navTextInactive,
               ]}
             >
-              LIMBO
+              EXPIRING
             </Text>
-          </TouchableOpacity>
+          </TactileButton>
 
-          <TouchableOpacity
-            onPress={() => setActiveTab('crypt')}
-            style={[styles.navTab, activeTab === 'crypt' && styles.navTabActive]}
-            activeOpacity={0.7}
+          <TactileButton
+            onPress={() => setActiveTab('grace')}
+            style={[styles.navTab, activeTab === 'grace' && styles.navTabActive]}
           >
             <Text
               style={[
                 styles.navText,
-                activeTab === 'crypt' ? styles.navTextActive : styles.navTextInactive,
+                activeTab === 'grace' ? styles.navTextActive : styles.navTextInactive,
               ]}
             >
-              CRYPT
+              GRACE
             </Text>
-          </TouchableOpacity>
+          </TactileButton>
 
-          <TouchableOpacity
-            onPress={() => setActiveTab('vault')}
-            style={[styles.navTab, activeTab === 'vault' && styles.navTabActive]}
-            activeOpacity={0.7}
+          <TactileButton
+            onPress={() => setActiveTab('keepers')}
+            style={[styles.navTab, activeTab === 'keepers' && styles.navTabActive]}
           >
             <Text
               style={[
                 styles.navText,
-                activeTab === 'vault' ? styles.navTextActive : styles.navTextInactive,
+                activeTab === 'keepers' ? styles.navTextActive : styles.navTextInactive,
               ]}
             >
-              VAULT
+              KEEPERS
             </Text>
-          </TouchableOpacity>
+          </TactileButton>
 
-          <TouchableOpacity
+          <TactileButton
             onPress={() => setActiveTab('info')}
             style={[styles.navTab, activeTab === 'info' && styles.navTabActive]}
-            activeOpacity={0.7}
           >
             <Text
               style={[
@@ -148,12 +146,11 @@ export default function App() {
             >
               INFO
             </Text>
-          </TouchableOpacity>
+          </TactileButton>
 
-          <TouchableOpacity
+          <TactileButton
             onPress={() => setActiveTab('settings')}
             style={[styles.navTab, activeTab === 'settings' && styles.navTabActive]}
-            activeOpacity={0.7}
           >
             <Text
               style={[
@@ -163,7 +160,7 @@ export default function App() {
             >
               CONFIG
             </Text>
-          </TouchableOpacity>
+          </TactileButton>
         </View>
       </SafeAreaView>
 
@@ -171,9 +168,12 @@ export default function App() {
       <PhotoDetailModal
         item={selectedPhoto}
         onClose={() => setSelectedPhoto(null)}
-        onVault={handleVaultPhoto}
+        onVault={handleKeepPhoto}
         onDelete={handleDeletePhoto}
       />
+
+      {/* Opening Intro Splash Sequence */}
+      {showSplash && <IntroSplash onFinish={() => setShowSplash(false)} />}
     </View>
   );
 }
@@ -187,30 +187,32 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   navBarContainer: {
-    backgroundColor: Colors.background,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    backgroundColor: '#0A0A0C',
+    borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
   navBar: {
     flexDirection: 'row',
-    height: 52,
+    height: Platform.OS === 'android' ? 56 : 50,
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingHorizontal: Spacing.xs,
   },
   navTab: {
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderRadius: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 7,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   navTabActive: {
     backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
   },
   navText: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 9,
+    fontWeight: '800',
     letterSpacing: 0.8,
   },
   navTextActive: {

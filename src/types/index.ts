@@ -1,6 +1,4 @@
-export type PhotoStatus = 'limbo' | 'crypt' | 'vault';
-
-export type CategoryTag = 'parking' | 'receipt' | 'pass' | 'note';
+export type PhotoStatus = 'active' | 'grace' | 'keeper' | 'limbo' | 'crypt' | 'vault';
 
 export interface PhotoItem {
   id: string;
@@ -10,7 +8,7 @@ export interface PhotoItem {
   expiresAt: number;
   cryptExpiresAt?: number;
   status: PhotoStatus;
-  tag?: CategoryTag;
+  groupName?: string;
   note?: string;
   width?: number;
   height?: number;

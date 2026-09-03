@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  TouchableOpacity,
   RefreshControl,
   Alert,
 } from 'react-native';
@@ -14,53 +13,53 @@ import { Header } from '../components/Header';
 import { PhotoCard } from '../components/PhotoCard';
 import {
   getPhotosByStatus,
-  resurrectFromCrypt,
+  resurrectFromGrace,
   permanentlyDelete,
 } from '../services/storage';
 import { runLifecycleSweep } from '../services/expiration';
 
-interface CryptScreenProps {
+interface GraceScreenProps {
   onSelectPhoto: (item: PhotoItem) => void;
 }
 
-export const CryptScreen: React.FC<CryptScreenProps> = ({ onSelectPhoto }) => {
+export const GraceScreen: React.FC<GraceScreenProps> = ({ onSelectPhoto }) => {
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  const loadCrypt = useCallback(async () => {
+  const loadGrace = useCallback(async () => {
     await runLifecycleSweep();
-    const items = await getPhotosByStatus('crypt');
+    const items = await getPhotosByStatus('grace');
     setPhotos(items);
   }, []);
 
   useEffect(() => {
-    loadCrypt();
-  }, [loadCrypt]);
+    loadGrace();
+  }, [loadGrace]);
 
   const onRefresh = async () => {
     setIsRefreshing(true);
-    await loadCrypt();
+    await loadGrace();
     setIsRefreshing(false);
   };
 
   const handleResurrect = async (item: PhotoItem) => {
-    await resurrectFromCrypt(item.id, 2 * 60 * 60 * 1000); // 2h extension
-    Alert.alert('Resurrected', 'Item returned to Limbo with a 2-hour lifespan.');
-    await loadCrypt();
+    await resurrectFromGrace(item.id, 2 * 60 * 60 * 1000); // 2h extension
+    Alert.alert('Restored', 'Photo returned to Active notes with 2 hours left.');
+    await loadGrace();
   };
 
   const handlePermanentDelete = async (item: PhotoItem) => {
     Alert.alert(
-      'Permanent Erasure',
-      'This photo will be completely wiped from disk. This cannot be undone.',
+      'Erase Completely',
+      'This photo will be erased from this phone forever. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Wipe',
+          text: 'Erase Now',
           style: 'destructive',
           onPress: async () => {
             await permanentlyDelete(item.id);
-            await loadCrypt();
+            await loadGrace();
           },
         },
       ]
@@ -70,18 +69,18 @@ export const CryptScreen: React.FC<CryptScreenProps> = ({ onSelectPhoto }) => {
   const handlePurgeAll = async () => {
     if (photos.length === 0) return;
     Alert.alert(
-      'Empty the Crypt',
-      `Permanently delete all ${photos.length} grace period photos immediately?`,
+      'Empty Grace Lounge',
+      `Permanently erase all ${photos.length} photos right now?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Empty Now',
+          text: 'Empty Lounge',
           style: 'destructive',
           onPress: async () => {
             for (const item of photos) {
               await permanentlyDelete(item.id);
             }
-            await loadCrypt();
+            await loadGrace();
           },
         },
       ]
@@ -91,8 +90,8 @@ export const CryptScreen: React.FC<CryptScreenProps> = ({ onSelectPhoto }) => {
   return (
     <View style={styles.container}>
       <Header
-        title="The Crypt"
-        subtitle="24-Hour Safety Grace Lounge"
+        title="Grace Lounge"
+        subtitle="24-Hour Recovery Net"
         rightAction={
           photos.length > 0
             ? {
@@ -103,12 +102,11 @@ export const CryptScreen: React.FC<CryptScreenProps> = ({ onSelectPhoto }) => {
         }
       />
 
-      {/* Explainer Banner */}
-      <View style={styles.infoBanner}>
-        <Text style={styles.infoTitle}>SAFETY NET ACTIVE</Text>
-        <Text style={styles.infoBody}>
-          Items moved here remain for 24 hours before unrecoverable physical disk erasure. You can
-          resurrect them anytime before expiration.
+      <View style={styles.banner}>
+        <Text style={styles.bannerTitle}>ACCIDENTAL LOSS PROTECTION</Text>
+        <Text style={styles.bannerText}>
+          Expired photos stay here for 24 hours before automatic permanent disk erasure. Tap
+          'Restore' if you expired a photo by mistake.
         </Text>
       </View>
 
@@ -127,17 +125,17 @@ export const CryptScreen: React.FC<CryptScreenProps> = ({ onSelectPhoto }) => {
           <PhotoCard
             item={item}
             onPress={() => onSelectPhoto(item)}
-            primaryActionLabel="Resurrect"
+            primaryActionLabel="Restore"
             onPrimaryAction={() => handleResurrect(item)}
-            secondaryActionLabel="Wipe"
+            secondaryActionLabel="Erase"
             onSecondaryAction={() => handlePermanentDelete(item)}
           />
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={Typography.titleMedium}>Crypt is Empty</Text>
+            <Text style={Typography.titleMedium}>Lounge is Empty</Text>
             <Text style={[Typography.bodyMedium, styles.emptySubtext]}>
-              No photos currently in grace period.
+              No photos currently in recovery. Everything is clean.
             </Text>
           </View>
         }
@@ -151,20 +149,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  infoBanner: {
+  banner: {
     backgroundColor: Colors.surface,
     padding: Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
+    gap: 4,
   },
-  infoTitle: {
+  bannerTitle: {
     ...Typography.badge,
     color: Colors.textSecondary,
-    marginBottom: 4,
+    fontSize: 10,
   },
-  infoBody: {
+  bannerText: {
     ...Typography.bodyMedium,
     color: Colors.textMuted,
+    fontSize: 12,
     lineHeight: 18,
   },
   listContent: {
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 80,
+    paddingVertical: 90,
     paddingHorizontal: Spacing.lg,
   },
   emptySubtext: {

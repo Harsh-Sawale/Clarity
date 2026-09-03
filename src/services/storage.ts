@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PhotoItem, PhotoStatus, StorageMetrics, CategoryTag } from '../types';
+import { PhotoItem, PhotoStatus, StorageMetrics } from '../types';
 
 const STORAGE_KEY_PHOTOS = '@clarity_photos_meta';
 const STORAGE_KEY_METRICS = '@clarity_storage_metrics';
@@ -31,14 +31,36 @@ async function saveAllPhotos(photos: PhotoItem[]): Promise<void> {
 export async function getPhotosByStatus(status: PhotoStatus): Promise<PhotoItem[]> {
   const all = await getAllPhotos();
   return all
-    .filter((p) => p.status === status)
+    .filter((p) => {
+      if (status === 'active' || status === 'limbo') {
+        return p.status === 'active' || p.status === 'limbo';
+      }
+      if (status === 'grace' || status === 'crypt') {
+        return p.status === 'grace' || p.status === 'crypt';
+      }
+      if (status === 'keeper' || status === 'vault') {
+        return p.status === 'keeper' || p.status === 'vault';
+      }
+      return p.status === status;
+    })
     .sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export async function getUserGroups(): Promise<string[]> {
+  const all = await getAllPhotos();
+  const groupsSet = new Set<string>();
+  all.forEach((p) => {
+    if (p.groupName && p.groupName.trim()) {
+      groupsSet.add(p.groupName.trim());
+    }
+  });
+  return Array.from(groupsSet);
 }
 
 export async function saveCapturedPhoto(params: {
   tempUri: string;
   durationMs: number;
-  tag?: CategoryTag;
+  groupName?: string;
   note?: string;
 }): Promise<PhotoItem> {
   await ensureDirectoryExists();
@@ -68,8 +90,8 @@ export async function saveCapturedPhoto(params: {
     createdAt: now,
     durationMs: params.durationMs,
     expiresAt: now + params.durationMs,
-    status: 'limbo',
-    tag: params.tag,
+    status: 'active',
+    groupName: params.groupName,
     note: params.note,
     sizeBytes: fileSizeBytes,
   };
@@ -81,30 +103,36 @@ export async function saveCapturedPhoto(params: {
   return newItem;
 }
 
-export async function moveToVault(id: string): Promise<void> {
+export async function moveToKeepers(id: string): Promise<void> {
   const all = await getAllPhotos();
   const item = all.find((p) => p.id === id);
   if (item) {
-    item.status = 'vault';
+    item.status = 'keeper';
     await saveAllPhotos(all);
   }
 }
 
-export async function moveToCrypt(id: string, gracePeriodMs: number = 24 * 60 * 60 * 1000): Promise<void> {
+// Backward compatible alias
+export const moveToVault = moveToKeepers;
+
+export async function moveToGraceLounge(id: string, gracePeriodMs: number = 24 * 60 * 60 * 1000): Promise<void> {
   const all = await getAllPhotos();
   const item = all.find((p) => p.id === id);
   if (item) {
-    item.status = 'crypt';
+    item.status = 'grace';
     item.cryptExpiresAt = Date.now() + gracePeriodMs;
     await saveAllPhotos(all);
   }
 }
 
-export async function resurrectFromCrypt(id: string, extensionDurationMs: number = 2 * 60 * 60 * 1000): Promise<void> {
+// Backward compatible alias
+export const moveToCrypt = moveToGraceLounge;
+
+export async function resurrectFromGrace(id: string, extensionDurationMs: number = 2 * 60 * 60 * 1000): Promise<void> {
   const all = await getAllPhotos();
   const item = all.find((p) => p.id === id);
   if (item) {
-    item.status = 'limbo';
+    item.status = 'active';
     item.createdAt = Date.now();
     item.durationMs = extensionDurationMs;
     item.expiresAt = Date.now() + extensionDurationMs;
@@ -112,6 +140,9 @@ export async function resurrectFromCrypt(id: string, extensionDurationMs: number
     await saveAllPhotos(all);
   }
 }
+
+// Backward compatible alias
+export const resurrectFromCrypt = resurrectFromGrace;
 
 export async function permanentlyDelete(id: string): Promise<void> {
   const all = await getAllPhotos();
@@ -127,19 +158,9 @@ export async function permanentlyDelete(id: string): Promise<void> {
       // Ignored
     }
 
-    // Update reclaimed metrics
     await recordReclaimedMetric(item.sizeBytes || 0);
 
     all.splice(targetIndex, 1);
-    await saveAllPhotos(all);
-  }
-}
-
-export async function extendPhotoDuration(id: string, additionalMs: number): Promise<void> {
-  const all = await getAllPhotos();
-  const item = all.find((p) => p.id === id);
-  if (item) {
-    item.expiresAt = Math.max(item.expiresAt, Date.now()) + additionalMs;
     await saveAllPhotos(all);
   }
 }
@@ -177,9 +198,9 @@ export async function getStorageMetrics(): Promise<StorageMetrics> {
   }
 
   return {
-    activeCount: all.filter((p) => p.status === 'limbo').length,
-    cryptCount: all.filter((p) => p.status === 'crypt').length,
-    vaultCount: all.filter((p) => p.status === 'vault').length,
+    activeCount: all.filter((p) => p.status === 'active' || p.status === 'limbo').length,
+    cryptCount: all.filter((p) => p.status === 'grace' || p.status === 'crypt').length,
+    vaultCount: all.filter((p) => p.status === 'keeper' || p.status === 'vault').length,
     reclaimedCount,
     reclaimedBytes,
   };

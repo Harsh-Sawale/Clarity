@@ -4,22 +4,22 @@ import {
   Text,
   Image,
   StyleSheet,
-  TouchableOpacity,
   TextInput,
   Modal,
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StatusBar as RNStatusBar,
 } from 'react-native';
 import { Colors, Spacing, Typography } from '../theme/colors';
-import { PRESET_DURATIONS, CATEGORY_DEFAULTS } from '../config/maintainer';
-import { CategoryTag } from '../types';
-import { TagChip } from '../components/TagChip';
+import { PRESET_DURATIONS } from '../config/maintainer';
+import { TactileButton } from '../components/TactileButton';
 
 interface PreviewModalProps {
   visible: boolean;
   photoUri: string | null;
-  onConfirm: (durationMs: number, tag?: CategoryTag, note?: string) => void;
+  onConfirm: (durationMs: number, groupName?: string, note?: string) => void;
   onRetake: () => void;
 }
 
@@ -30,26 +30,19 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   onRetake,
 }) => {
   const [selectedDuration, setSelectedDuration] = useState<number>(PRESET_DURATIONS[1].value); // Default 2h
-  const [selectedTag, setSelectedTag] = useState<CategoryTag | undefined>(undefined);
+  const [groupName, setGroupName] = useState<string>('');
   const [note, setNote] = useState<string>('');
 
   if (!photoUri) return null;
 
-  const handleTagPress = (tag: CategoryTag) => {
-    if (selectedTag === tag) {
-      setSelectedTag(undefined);
-    } else {
-      setSelectedTag(tag);
-      if (CATEGORY_DEFAULTS[tag]) {
-        setSelectedDuration(CATEGORY_DEFAULTS[tag].defaultDurationMs);
-      }
-    }
-  };
-
   const handleSave = () => {
-    onConfirm(selectedDuration, selectedTag, note.trim() || undefined);
+    onConfirm(
+      selectedDuration,
+      groupName.trim() || undefined,
+      note.trim() || undefined
+    );
+    setGroupName('');
     setNote('');
-    setSelectedTag(undefined);
   };
 
   return (
@@ -59,86 +52,97 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.keyboardContainer}
         >
-          {/* Top Bar */}
+          {/* Top Bar with clear safe padding */}
           <View style={styles.topBar}>
-            <TouchableOpacity onPress={onRetake} style={styles.textButton} activeOpacity={0.7}>
-              <Text style={styles.retakeText}>Retake</Text>
-            </TouchableOpacity>
-            <Text style={Typography.caption}>POST-CAPTURE INSPECTION</Text>
-            <View style={{ width: 50 }} />
+            <TactileButton onPress={onRetake} style={styles.retakeButton}>
+              <Text style={styles.retakeText}>RETAKE</Text>
+            </TactileButton>
+
+            <Text style={styles.headerTitle}>INSPECT & SAVE</Text>
+
+            <View style={{ width: 70 }} />
           </View>
 
-          {/* Photo Preview Container */}
+          {/* Photo Preview */}
           <View style={styles.previewBox}>
             <Image source={{ uri: photoUri }} style={styles.image} resizeMode="contain" />
           </View>
 
-          {/* Controls Sheet */}
+          {/* Controls Sheet with Dedicated Separate Sections */}
           <View style={styles.controlsSheet}>
-            {/* Tag Selection */}
-            <View style={styles.sectionRow}>
-              <Text style={[Typography.caption, styles.sectionLabel]}>CATEGORY</Text>
-              <View style={styles.chipRow}>
-                {(['parking', 'receipt', 'pass', 'note'] as CategoryTag[]).map((tag) => (
-                  <TagChip
-                    key={tag}
-                    label={tag.toUpperCase()}
-                    isSelected={selectedTag === tag}
-                    onPress={() => handleTagPress(tag)}
-                  />
-                ))}
-              </View>
-            </View>
-
-            {/* Lifespan Selection */}
-            <View style={styles.sectionRow}>
-              <Text style={[Typography.caption, styles.sectionLabel]}>LIFESPAN</Text>
-              <View style={styles.chipRow}>
-                {PRESET_DURATIONS.map((preset) => (
-                  <TouchableOpacity
-                    key={preset.label}
-                    onPress={() => setSelectedDuration(preset.value)}
-                    style={[
-                      styles.durationButton,
-                      selectedDuration === preset.value && styles.durationButtonActive,
-                    ]}
-                    activeOpacity={0.7}
-                  >
-                    <Text
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollGap}>
+              {/* Expiration Presets */}
+              <View style={styles.sectionGroup}>
+                <Text style={styles.sectionTitle}>KEEP ACTIVE FOR</Text>
+                <View style={styles.durationRow}>
+                  {PRESET_DURATIONS.map((preset) => (
+                    <TactileButton
+                      key={preset.label}
+                      onPress={() => setSelectedDuration(preset.value)}
                       style={[
-                        styles.durationText,
-                        selectedDuration === preset.value && styles.durationTextActive,
+                        styles.durationBtn,
+                        selectedDuration === preset.value && styles.durationBtnActive,
                       ]}
                     >
-                      {preset.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={[
+                          styles.durationBtnText,
+                          selectedDuration === preset.value && styles.durationBtnTextActive,
+                        ]}
+                      >
+                        {preset.label}
+                      </Text>
+                    </TactileButton>
+                  ))}
+                </View>
               </View>
-            </View>
 
-            {/* Memo Note Input */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Optional text memo (e.g. Row 4, Pillar C)..."
-                placeholderTextColor={Colors.textMuted}
-                value={note}
-                onChangeText={setNote}
-                maxLength={80}
+              {/* Custom User-Defined Group */}
+              <View style={styles.sectionGroup}>
+                <Text style={styles.sectionTitle}>CUSTOM GROUP / ALBUM (OPTIONAL)</Text>
+                <View style={styles.inputCard}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Name a group (e.g. Groceries, Work, Parking, Taxes)..."
+                    placeholderTextColor={Colors.textMuted}
+                    value={groupName}
+                    onChangeText={setGroupName}
+                    maxLength={30}
+                  />
+                </View>
+              </View>
+
+              {/* Quick Note */}
+              <View style={styles.sectionGroup}>
+                <Text style={styles.sectionTitle}>ATTACH MEMO (OPTIONAL)</Text>
+                <View style={styles.inputCard}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Quick note (e.g. Row 4 near elevator, Wi-Fi code)..."
+                    placeholderTextColor={Colors.textMuted}
+                    value={note}
+                    onChangeText={setNote}
+                    maxLength={80}
+                  />
+                </View>
+              </View>
+
+              {/* Primary Action Button */}
+              <TactileButton
+                onPress={handleSave}
+                style={styles.confirmButton}
+                textStyle={styles.confirmButtonText}
+                title="Save Scratch Photo"
               />
-            </View>
-
-            {/* Confirm Save Action Button */}
-            <TouchableOpacity onPress={handleSave} style={styles.saveButton} activeOpacity={0.85}>
-              <Text style={styles.saveButtonText}>Confirm & Save to Limbo</Text>
-            </TouchableOpacity>
+            </ScrollView>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
   );
 };
+
+const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0;
 
 const styles = StyleSheet.create({
   container: {
@@ -152,23 +156,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: statusBarHeight + 8,
+    paddingBottom: 12,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
   },
-  textButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+  retakeButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   retakeText: {
     color: Colors.textSecondary,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+  },
+  headerTitle: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    letterSpacing: 1.2,
+    fontWeight: '700',
   },
   previewBox: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: '#08080A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -177,67 +193,75 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   controlsSheet: {
-    padding: Spacing.md,
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: Colors.surface,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
-    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    maxHeight: 320,
   },
-  sectionRow: {
+  scrollGap: {
+    gap: 12,
+    paddingBottom: 16,
+  },
+  sectionGroup: {
     gap: 6,
   },
-  sectionLabel: {
+  sectionTitle: {
+    ...Typography.badge,
     color: Colors.textMuted,
+    fontSize: 10,
+    letterSpacing: 0.8,
   },
-  chipRow: {
+  durationRow: {
     flexDirection: 'row',
     gap: 8,
   },
-  durationButton: {
+  durationBtn: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: Colors.border,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceElevated,
     alignItems: 'center',
   },
-  durationButtonActive: {
+  durationBtnActive: {
     borderColor: Colors.textPrimary,
     backgroundColor: Colors.textPrimary,
   },
-  durationText: {
+  durationBtnText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.textSecondary,
+    letterSpacing: 0.4,
   },
-  durationTextActive: {
+  durationBtnTextActive: {
     color: Colors.background,
   },
-  inputContainer: {
-    marginTop: 4,
-    backgroundColor: Colors.surface,
-    borderRadius: 8,
+  inputCard: {
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: Colors.border,
     paddingHorizontal: Spacing.sm,
   },
-  input: {
-    height: 40,
+  textInput: {
+    height: 42,
     color: Colors.textPrimary,
     fontSize: 13,
   },
-  saveButton: {
+  confirmButton: {
     backgroundColor: Colors.textPrimary,
-    paddingVertical: 14,
-    borderRadius: 10,
+    paddingVertical: 15,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 4,
   },
-  saveButtonText: {
+  confirmButtonText: {
     color: Colors.background,
     fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: -0.2,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
 });

@@ -4,11 +4,12 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
   Linking,
+  Alert,
 } from 'react-native';
 import { Colors, Spacing, Typography } from '../theme/colors';
 import { Header } from '../components/Header';
+import { TactileButton } from '../components/TactileButton';
 import { MAINTAINER_CONFIG } from '../config/maintainer';
 import { getStorageMetrics } from '../services/storage';
 import { formatBytes } from '../services/expiration';
@@ -27,8 +28,17 @@ export const InfoScreen: React.FC = () => {
     getStorageMetrics().then(setMetrics);
   }, []);
 
-  const openUrl = (url: string) => {
-    Linking.openURL(url).catch(() => {});
+  const openUrl = async (url: string, label: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        await Linking.openURL(url);
+      }
+    } catch {
+      Alert.alert(label, `URL: ${url}`);
+    }
   };
 
   return (
@@ -38,7 +48,7 @@ export const InfoScreen: React.FC = () => {
         subtitle="Open Source Transparency Hub"
       />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Storage Impact Metrics */}
         <View style={styles.card}>
           <Text style={styles.cardLabel}>IMPACT METRICS</Text>
@@ -57,35 +67,33 @@ export const InfoScreen: React.FC = () => {
 
         {/* Maintainer & Open Source Attribution */}
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>MAINTAINER & REPOSITORY</Text>
+          <Text style={styles.cardLabel}>CREATOR & SOURCE CODE</Text>
           <Text style={styles.primaryTitle}>{MAINTAINER_CONFIG.appName}</Text>
-          <Text style={styles.authorSubtitle}>By {MAINTAINER_CONFIG.authorName}</Text>
+          <Text style={styles.authorSubtitle}>Engineered by {MAINTAINER_CONFIG.authorName}</Text>
           <Text style={[Typography.bodyMedium, styles.bioText]}>
             {MAINTAINER_CONFIG.authorBio}
           </Text>
 
-          <View style={styles.linkButtonsRow}>
-            <TouchableOpacity
+          <View style={styles.linkButtonsCol}>
+            <TactileButton
               style={styles.actionButton}
-              activeOpacity={0.7}
-              onPress={() => openUrl(MAINTAINER_CONFIG.repositoryUrl)}
-            >
-              <Text style={styles.actionButtonText}>View on GitHub</Text>
-            </TouchableOpacity>
+              textStyle={styles.actionButtonText}
+              title="Open Harsh's GitHub Profile"
+              onPress={() => openUrl(`https://github.com/${MAINTAINER_CONFIG.githubUsername}`, 'GitHub Profile')}
+            />
 
-            <TouchableOpacity
+            <TactileButton
               style={styles.actionButtonSecondary}
-              activeOpacity={0.7}
-              onPress={() => openUrl(MAINTAINER_CONFIG.issuesUrl)}
-            >
-              <Text style={styles.actionButtonSecondaryText}>File an Issue</Text>
-            </TouchableOpacity>
+              textStyle={styles.actionButtonSecondaryText}
+              title="View Clarity Source Repository"
+              onPress={() => openUrl(MAINTAINER_CONFIG.repositoryUrl, 'Source Repository')}
+            />
           </View>
         </View>
 
         {/* Offline & Zero-Telemetry Audit */}
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>ZERO-TELEMETRY AUDIT</Text>
+          <Text style={styles.cardLabel}>ZERO-NETWORK AUDIT</Text>
           <View style={styles.auditRow}>
             <Text style={styles.auditKey}>Network Permission:</Text>
             <Text style={styles.auditValue}>NOT REQUESTED</Text>
@@ -95,7 +103,7 @@ export const InfoScreen: React.FC = () => {
             <Text style={styles.auditValue}>ISOLATED SCOPE</Text>
           </View>
           <View style={styles.auditRow}>
-            <Text style={styles.auditKey}>Analytics Trackers:</Text>
+            <Text style={styles.auditKey}>Analytics / Trackers:</Text>
             <Text style={styles.auditValue}>ZERO</Text>
           </View>
           <View style={styles.auditRow}>
@@ -104,35 +112,36 @@ export const InfoScreen: React.FC = () => {
           </View>
           <Text style={[Typography.caption, styles.auditDescription]}>
             Clarity runs 100% on-device. It does not communicate with external servers, cloud
-            providers, or analytics engines. All files remain in your phone's isolated sandbox.
+            providers, or analytics engines. All files remain strictly in your phone's isolated sandbox.
           </Text>
         </View>
 
-        {/* Architectural FAQ */}
+        {/* FAQ */}
         <View style={styles.card}>
           <Text style={styles.cardLabel}>FREQUENTLY ASKED QUESTIONS</Text>
 
-          <Text style={styles.faqQuestion}>Can Google Photos or Apple Photos see these?</Text>
+          <Text style={styles.faqQuestion}>Can Google Photos see these photos?</Text>
           <Text style={styles.faqAnswer}>
-            No. Clarity saves files directly to the internal application sandbox. The Android
+            No. Clarity saves files directly to an internal application sandbox. The Android
             system media scanner is blocked from indexing this folder, preventing automatic cloud
             syncing.
           </Text>
 
           <Text style={styles.faqQuestion}>How does automatic deletion work?</Text>
           <Text style={styles.faqAnswer}>
-            When a photo exceeds its designated lifespan, it is immediately moved out of Limbo into
-            The Crypt for a 24-hour grace window. Once that grace window expires, the physical file
-            is purged from disk.
+            When a photo exceeds its designated lifespan, it is immediately moved to the Grace
+            Lounge for a 24-hour recovery period. Once that grace period expires, the physical file
+            is permanently erased from disk.
           </Text>
         </View>
 
-        {/* Version Footer */}
+        {/* Footer Signature */}
         <View style={styles.footerContainer}>
-          <Text style={styles.footerText}>
-            {MAINTAINER_CONFIG.appName} v{MAINTAINER_CONFIG.version} (Build {MAINTAINER_CONFIG.buildNumber})
+          <Text style={styles.footerAuthorSignature}>Made by Harsh</Text>
+          <Text style={styles.footerVersionText}>
+            {MAINTAINER_CONFIG.appName} Version {MAINTAINER_CONFIG.version} (Build {MAINTAINER_CONFIG.buildNumber})
           </Text>
-          <Text style={styles.footerText}>Released under the {MAINTAINER_CONFIG.license} License</Text>
+          <Text style={styles.footerLicenseText}>Open Source • Released under the {MAINTAINER_CONFIG.license} License</Text>
         </View>
       </ScrollView>
     </View>
@@ -147,61 +156,59 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: Spacing.md,
     gap: Spacing.md,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: 40,
   },
   card: {
     backgroundColor: Colors.surface,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
     padding: Spacing.md,
-    gap: 8,
+    gap: 10,
   },
   cardLabel: {
     ...Typography.badge,
     color: Colors.textMuted,
+    fontSize: 10,
   },
   primaryTitle: {
     ...Typography.titleMedium,
   },
   authorSubtitle: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    marginBottom: 4,
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textPrimary,
   },
   bioText: {
     color: Colors.textSecondary,
+    lineHeight: 20,
   },
-  linkButtonsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 8,
+  linkButtonsCol: {
+    gap: 8,
+    marginTop: 4,
   },
   actionButton: {
-    flex: 1,
     backgroundColor: Colors.textPrimary,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 10,
   },
   actionButtonText: {
     color: Colors.background,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   actionButtonSecondary: {
-    flex: 1,
     backgroundColor: Colors.surfaceElevated,
     borderWidth: 1,
     borderColor: Colors.border,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 10,
   },
   actionButtonSecondaryText: {
-    color: Colors.textSecondary,
+    color: Colors.textPrimary,
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   metricRow: {
     flexDirection: 'row',
@@ -213,14 +220,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metricValue: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 26,
+    fontWeight: '800',
     color: Colors.textPrimary,
     letterSpacing: -0.5,
   },
   metricSubtitle: {
     ...Typography.caption,
     marginTop: 2,
+    color: Colors.textSecondary,
   },
   metricDivider: {
     width: 1,
@@ -230,7 +238,7 @@ const styles = StyleSheet.create({
   auditRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
   },
@@ -240,7 +248,7 @@ const styles = StyleSheet.create({
   },
   auditValue: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.textPrimary,
     letterSpacing: 0.4,
   },
@@ -262,11 +270,22 @@ const styles = StyleSheet.create({
   },
   footerContainer: {
     alignItems: 'center',
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
     gap: 4,
   },
-  footerText: {
+  footerAuthorSignature: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    letterSpacing: 0.8,
+  },
+  footerVersionText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  footerLicenseText: {
     ...Typography.caption,
     color: Colors.textMuted,
+    fontSize: 11,
   },
 });

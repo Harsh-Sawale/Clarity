@@ -48,14 +48,14 @@ export const PhotoDetailModal: React.FC<PhotoDetailModalProps> = ({
         {/* Metadata & Actions Drawer */}
         <View style={styles.detailsDrawer}>
           <View style={styles.badgeRow}>
-            {item.tag && <TagChip label={item.tag.toUpperCase()} isSelected size="sm" />}
+            {item.groupName && <TagChip label={item.groupName.toUpperCase()} isSelected size="sm" />}
             <View style={styles.timerPill}>
               <Text style={styles.timerText}>
-                {item.status === 'limbo'
+                {item.status === 'active' || item.status === 'limbo'
                   ? formatRemainingTime(item.expiresAt)
-                  : item.status === 'crypt'
-                  ? 'In Grace Period'
-                  : 'Permanent Vault'}
+                  : item.status === 'grace' || item.status === 'crypt'
+                  ? 'Grace Lounge (24h)'
+                  : 'Permanent Keep'}
               </Text>
             </View>
           </View>
@@ -74,7 +74,7 @@ export const PhotoDetailModal: React.FC<PhotoDetailModalProps> = ({
 
           {/* Action Row */}
           <View style={styles.actionsRow}>
-            {item.status === 'limbo' && onVault && (
+            {(item.status === 'active' || item.status === 'limbo') && onVault && (
               <TouchableOpacity
                 style={styles.primaryActionButton}
                 onPress={() => {
@@ -82,7 +82,7 @@ export const PhotoDetailModal: React.FC<PhotoDetailModalProps> = ({
                   onClose();
                 }}
               >
-                <Text style={styles.primaryActionText}>Move to Vault (Keep)</Text>
+                <Text style={styles.primaryActionText}>Save to Keepers</Text>
               </TouchableOpacity>
             )}
 

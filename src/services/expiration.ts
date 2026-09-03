@@ -1,18 +1,18 @@
-import { getAllPhotos, moveToCrypt, permanentlyDelete } from './storage';
+import { getAllPhotos, moveToGraceLounge, permanentlyDelete } from './storage';
 
-export async function runLifecycleSweep(): Promise<{ sweptToCrypt: number; permanentlyPurged: number }> {
+export async function runLifecycleSweep(): Promise<{ sweptToGrace: number; permanentlyPurged: number }> {
   const all = await getAllPhotos();
   const now = Date.now();
-  let sweptToCrypt = 0;
+  let sweptToGrace = 0;
   let permanentlyPurged = 0;
 
   for (const item of all) {
-    if (item.status === 'limbo') {
+    if (item.status === 'active' || item.status === 'limbo') {
       if (now >= item.expiresAt) {
-        await moveToCrypt(item.id);
-        sweptToCrypt++;
+        await moveToGraceLounge(item.id);
+        sweptToGrace++;
       }
-    } else if (item.status === 'crypt') {
+    } else if (item.status === 'grace' || item.status === 'crypt') {
       if (item.cryptExpiresAt && now >= item.cryptExpiresAt) {
         await permanentlyDelete(item.id);
         permanentlyPurged++;
@@ -20,15 +20,14 @@ export async function runLifecycleSweep(): Promise<{ sweptToCrypt: number; perma
     }
   }
 
-  return { sweptToCrypt, permanentlyPurged };
+  return { sweptToGrace, permanentlyPurged };
 }
 
 export function calculateLifespanProgress(createdAt: number, expiresAt: number): number {
   const total = expiresAt - createdAt;
   if (total <= 0) return 0;
   const elapsed = Date.now() - createdAt;
-  const remainingFraction = Math.max(0, Math.min(1, 1 - elapsed / total));
-  return remainingFraction;
+  return Math.max(0, Math.min(1, 1 - elapsed / total));
 }
 
 export function formatRemainingTime(expiresAt: number): string {
@@ -42,7 +41,7 @@ export function formatRemainingTime(expiresAt: number): string {
 
   if (hours > 24) {
     const days = Math.floor(hours / 24);
-    return `${days}d remaining`;
+    return `${days}d left`;
   }
   if (hours > 0) {
     return `${hours}h ${minutes}m left`;

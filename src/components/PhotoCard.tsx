@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import { PhotoItem } from '../types';
 import { Colors, Spacing, Typography } from '../theme/colors';
 import { formatRemainingTime } from '../services/expiration';
-import { TagChip } from './TagChip';
+import { TactileButton } from './TactileButton';
 
 interface PhotoCardProps {
   item: PhotoItem;
@@ -22,74 +22,89 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({
   onSecondaryAction,
   secondaryActionLabel,
 }) => {
-  const remainingText =
-    item.status === 'limbo'
-      ? formatRemainingTime(item.expiresAt)
-      : item.status === 'crypt'
-      ? 'Grace Period'
-      : 'Permanent';
+  const isExpiring = item.status === 'active' || item.status === 'limbo';
+  const isGrace = item.status === 'grace' || item.status === 'crypt';
+
+  const statusLabel = isExpiring
+    ? formatRemainingTime(item.expiresAt)
+    : isGrace
+    ? 'Grace Net (24h)'
+    : 'Permanent';
 
   return (
-    <TouchableOpacity activeOpacity={0.88} onPress={onPress} style={styles.card}>
-      <View style={styles.imageContainer}>
-        <Image source={{ uri: item.uri }} style={styles.image} resizeMode="cover" />
-        <View style={styles.topBadgeRow}>
-          {item.tag && <TagChip label={item.tag.toUpperCase()} size="sm" isSelected />}
-          <View style={styles.timerPill}>
-            <Text style={styles.timerText}>{remainingText}</Text>
+    <View style={styles.card}>
+      <TactileButton activeScale={0.98} onPress={onPress} style={styles.touchArea}>
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: item.uri }} style={styles.image} resizeMode="cover" />
+          
+          <View style={styles.topBadgeRow}>
+            {item.groupName ? (
+              <View style={styles.groupBadge}>
+                <Text style={styles.groupBadgeText}>{item.groupName.toUpperCase()}</Text>
+              </View>
+            ) : (
+              <View />
+            )}
+
+            <View style={styles.timerPill}>
+              <Text style={styles.timerText}>{statusLabel}</Text>
+            </View>
           </View>
         </View>
-      </View>
+      </TactileButton>
 
       <View style={styles.footer}>
-        {item.note ? (
-          <Text style={[Typography.caption, styles.noteText]} numberOfLines={1}>
-            {item.note}
-          </Text>
-        ) : (
-          <Text style={[Typography.caption, styles.dateText]}>
-            {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </Text>
-        )}
+        <View style={styles.infoCol}>
+          {item.note ? (
+            <Text style={styles.noteText} numberOfLines={1}>
+              {item.note}
+            </Text>
+          ) : (
+            <Text style={styles.dateText}>
+              Snapped {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Text>
+          )}
+        </View>
 
         <View style={styles.actionRow}>
           {onSecondaryAction && secondaryActionLabel && (
-            <TouchableOpacity
+            <TactileButton
               onPress={onSecondaryAction}
               style={styles.secondaryButton}
-              activeOpacity={0.7}
             >
               <Text style={styles.secondaryText}>{secondaryActionLabel}</Text>
-            </TouchableOpacity>
+            </TactileButton>
           )}
 
           {onPrimaryAction && primaryActionLabel && (
-            <TouchableOpacity
+            <TactileButton
               onPress={onPrimaryAction}
               style={styles.primaryButton}
-              activeOpacity={0.7}
             >
               <Text style={styles.primaryText}>{primaryActionLabel}</Text>
-            </TouchableOpacity>
+            </TactileButton>
           )}
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
     overflow: 'hidden',
     marginBottom: Spacing.md,
   },
+  touchArea: {
+    width: '100%',
+  },
   imageContainer: {
     width: '100%',
-    height: 190,
+    height: 200,
     backgroundColor: Colors.surfaceElevated,
     position: 'relative',
   },
@@ -99,69 +114,89 @@ const styles = StyleSheet.create({
   },
   topBadgeRow: {
     position: 'absolute',
-    top: Spacing.sm,
-    left: Spacing.sm,
-    right: Spacing.sm,
+    top: 10,
+    left: 10,
+    right: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  timerPill: {
-    backgroundColor: Colors.overlay,
-    paddingHorizontal: 8,
+  groupBadge: {
+    backgroundColor: Colors.textPrimary,
+    paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 6,
+  },
+  groupBadgeText: {
+    color: Colors.background,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  timerPill: {
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.borderLight,
   },
   timerText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.textPrimary,
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
   footer: {
-    padding: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
   },
-  noteText: {
+  infoCol: {
     flex: 1,
     marginRight: Spacing.sm,
-    color: Colors.textSecondary,
+  },
+  noteText: {
+    ...Typography.bodyMedium,
+    color: Colors.textPrimary,
+    fontWeight: '500',
   },
   dateText: {
-    flex: 1,
+    ...Typography.caption,
     color: Colors.textMuted,
   },
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   primaryButton: {
     backgroundColor: Colors.textPrimary,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 8,
   },
   primaryText: {
     color: Colors.background,
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
   },
   secondaryButton: {
     backgroundColor: Colors.surfaceElevated,
     borderWidth: 1,
     borderColor: Colors.border,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
   },
   secondaryText: {
     color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
