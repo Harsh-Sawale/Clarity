@@ -15,7 +15,11 @@ import { getStorageMetrics } from '../services/storage';
 import { formatBytes } from '../services/expiration';
 import { StorageMetrics } from '../types';
 
-export const InfoScreen: React.FC = () => {
+interface InfoScreenProps {
+  onBackToCamera?: () => void;
+}
+
+export const InfoScreen: React.FC<InfoScreenProps> = ({ onBackToCamera }) => {
   const [metrics, setMetrics] = useState<StorageMetrics>({
     activeCount: 0,
     cryptCount: 0,
@@ -46,6 +50,7 @@ export const InfoScreen: React.FC = () => {
       <Header
         title="Info & Trust"
         subtitle="Open Source Transparency Hub"
+        onBack={onBackToCamera}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

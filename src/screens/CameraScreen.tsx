@@ -10,7 +10,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Colors, Spacing, Typography } from '../theme/colors';
 import { ShutterButton } from '../components/ShutterButton';
-import { TactileButton } from '../components/TactileButton';
+import { GlassButton } from '../components/GlassButton';
 import { PreviewModal } from './PreviewModal';
 import { saveCapturedPhoto } from '../services/storage';
 
@@ -18,16 +18,19 @@ type CameraFacing = 'front' | 'back';
 
 interface CameraScreenProps {
   onPhotoSaved: () => void;
-  onNavigateToActive: () => void;
+  onNavigateToGallery: () => void;
+  onNavigateToInfo: () => void;
 }
 
 export const CameraScreen: React.FC<CameraScreenProps> = ({
   onPhotoSaved,
-  onNavigateToActive,
+  onNavigateToGallery,
+  onNavigateToInfo,
 }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<CameraFacing>('back');
   const [torch, setTorch] = useState<boolean>(false);
+  const [zoom, setZoom] = useState<number>(0); // 0 = 1x, 0.35 = 2x, 0.7 = 3x
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
 
@@ -43,14 +46,15 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({
         <View style={styles.permissionCard}>
           <Text style={Typography.titleLarge}>Camera Access Needed</Text>
           <Text style={[Typography.bodyMedium, styles.permissionDescription]}>
-            Clarity needs camera access to capture temporary visual notes. Everything stays
-            100% on this phone and is never sent to any server.
+            Clarity needs camera access to capture temporary visual scratch notes. All photos remain
+            100% on this phone and are never synced to any server.
           </Text>
-          <TactileButton
-            title="Grant Camera Access"
+          <GlassButton
+            title="GRANT CAMERA ACCESS"
             onPress={requestPermission}
-            style={styles.permissionButton}
-            textStyle={styles.permissionButtonText}
+            size="lg"
+            isActive
+            style={styles.permissionBtn}
           />
         </View>
       </SafeAreaView>
@@ -109,43 +113,82 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({
         style={StyleSheet.absoluteFill}
         facing={facing}
         enableTorch={torch}
-      >
-        <SafeAreaView style={styles.hudOverlay}>
-          {/* Top Control Bar - Extra notch clearance */}
-          <View style={styles.topControls}>
-            <TactileButton
-              onPress={toggleTorch}
-              style={[styles.circleButton, torch && styles.circleButtonActive]}
-            >
-              <Text style={[styles.circleButtonText, torch && styles.circleButtonTextActive]}>
-                {torch ? 'TORCH ON' : 'TORCH'}
-              </Text>
-            </TactileButton>
+        zoom={zoom}
+      />
 
-            <View style={styles.centerBrandPill}>
-              <Text style={styles.brandText}>CLARITY</Text>
-            </View>
+      {/* Touch-safe HUD Overlay with pointerEvents="box-none" */}
+      <View style={styles.hudOverlay} pointerEvents="box-none">
+        {/* Top Control Bar with Notch Clearance */}
+        <View style={styles.topBar} pointerEvents="box-none">
+          <GlassButton
+            title={torch ? 'TORCH ON' : 'TORCH'}
+            isActive={torch}
+            onPress={toggleTorch}
+            size="md"
+            style={styles.topButton}
+          />
 
-            <TactileButton onPress={toggleFacing} style={styles.circleButton}>
-              <Text style={styles.circleButtonText}>FLIP</Text>
-            </TactileButton>
+          <View style={styles.brandPill}>
+            <Text style={styles.brandText}>CLARITY</Text>
           </View>
 
-          {/* Bottom Shutter & Navigation Bar with dedicated non-overlapping zones */}
-          <View style={styles.bottomControls}>
-            <TactileButton onPress={onNavigateToActive} style={styles.galleryJumpButton}>
-              <Text style={styles.galleryJumpText}>EXPIRING</Text>
-            </TactileButton>
+          <GlassButton
+            title="FLIP"
+            onPress={toggleFacing}
+            size="md"
+            style={styles.topButton}
+          />
+        </View>
 
-            <View style={styles.shutterCenterBox}>
+        {/* Bottom Section: Zoom Selector + Floating Glass Control Island */}
+        <View style={styles.bottomSection} pointerEvents="box-none">
+          {/* Zoom Selector Bar (1x, 2x, 3x) */}
+          <View style={styles.zoomPillContainer} pointerEvents="auto">
+            <GlassButton
+              title="1x"
+              size="sm"
+              isActive={zoom === 0}
+              onPress={() => setZoom(0)}
+              style={styles.zoomButton}
+            />
+            <GlassButton
+              title="2x"
+              size="sm"
+              isActive={zoom === 0.35}
+              onPress={() => setZoom(0.35)}
+              style={styles.zoomButton}
+            />
+            <GlassButton
+              title="3x"
+              size="sm"
+              isActive={zoom === 0.7}
+              onPress={() => setZoom(0.7)}
+              style={styles.zoomButton}
+            />
+          </View>
+
+          {/* Floating Control Deck: Gallery, Shutter, Info */}
+          <View style={styles.bottomDeck} pointerEvents="auto">
+            <GlassButton
+              title="GALLERY"
+              size="md"
+              onPress={onNavigateToGallery}
+              style={styles.sideButton}
+            />
+
+            <View style={styles.shutterContainer}>
               <ShutterButton onPress={handleCapture} disabled={isCapturing} />
             </View>
 
-            {/* Balancer spacing block so shutter stays exactly centered */}
-            <View style={styles.galleryJumpSpacer} />
+            <GlassButton
+              title="INFO"
+              size="md"
+              onPress={onNavigateToInfo}
+              style={styles.sideButton}
+            />
           </View>
-        </SafeAreaView>
-      </CameraView>
+        </View>
+      </View>
 
       {/* Post-Capture Inspection Modal */}
       <PreviewModal
@@ -158,123 +201,102 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({
   );
 };
 
-const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0;
+const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 28) : 20;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#000000',
   },
   darkBackground: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#000000',
   },
   hudOverlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'space-between',
-    paddingTop: statusBarHeight + 12,
-    paddingBottom: 24,
+    paddingTop: statusBarHeight + 14,
+    paddingBottom: Platform.OS === 'android' ? 36 : 28,
     paddingHorizontal: Spacing.md,
+    zIndex: 10,
   },
-  topControls: {
+  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
   },
-  circleButton: {
+  topButton: {
+    minWidth: 90,
+  },
+  brandPill: {
+    backgroundColor: 'rgba(15, 15, 20, 0.75)',
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 24,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    paddingVertical: 8,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    minWidth: 74,
-  },
-  circleButtonActive: {
-    backgroundColor: Colors.textPrimary,
-    borderColor: Colors.textPrimary,
-  },
-  circleButtonText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    color: Colors.textPrimary,
-  },
-  circleButtonTextActive: {
-    color: Colors.background,
-  },
-  centerBrandPill: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   brandText: {
     fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 3,
-    color: Colors.textSecondary,
+    fontWeight: '800',
+    letterSpacing: 4,
+    color: '#E4E4E7',
   },
-  bottomControls: {
+  bottomSection: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 16,
+  },
+  zoomPillContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(15, 15, 20, 0.8)',
+    padding: 4,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    gap: 4,
+  },
+  zoomButton: {
+    minWidth: 44,
+  },
+  bottomDeck: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    paddingHorizontal: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
   },
-  galleryJumpButton: {
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    width: 90,
+  sideButton: {
+    width: 92,
   },
-  galleryJumpText: {
-    color: Colors.textPrimary,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-  },
-  shutterCenterBox: {
+  shutterContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  galleryJumpSpacer: {
-    width: 90,
-  },
   permissionContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#000000',
     justifyContent: 'center',
     padding: Spacing.xl,
   },
   permissionCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: '#141416',
     padding: Spacing.xl,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: Colors.border,
-    gap: 14,
+    borderColor: '#28282D',
+    gap: 16,
   },
   permissionDescription: {
     lineHeight: 22,
     color: Colors.textSecondary,
   },
-  permissionButton: {
-    backgroundColor: Colors.textPrimary,
-    paddingVertical: 14,
-    borderRadius: 10,
+  permissionBtn: {
     marginTop: 8,
-  },
-  permissionButtonText: {
-    color: Colors.background,
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.4,
   },
 });
