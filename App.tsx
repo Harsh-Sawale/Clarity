@@ -1,21 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, View, Animated } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CameraScreen } from './src/screens/CameraScreen';
 import { GalleryHub } from './src/screens/GalleryHub';
-import { InfoScreen } from './src/screens/InfoScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
 import { PhotoDetailModal } from './src/screens/PhotoDetailModal';
 import { IntroSplash } from './src/screens/IntroSplash';
 import { PhotoItem } from './src/types';
 import { moveToKeepers, permanentlyDelete } from './src/services/storage';
 
-type ActiveView = 'camera' | 'gallery' | 'info';
+type ActiveView = 'camera' | 'gallery' | 'settings';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<ActiveView>('camera');
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
+
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     // Only display opening splash ONCE on first-ever launch
@@ -26,13 +29,34 @@ export default function App() {
     });
   }, []);
 
+  const changeView = (nextView: ActiveView) => {
+    // Liquid cross-dissolve with spring scale
+    fadeAnim.setValue(0.4);
+    scaleAnim.setValue(0.97);
+    setCurrentView(nextView);
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 55,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   const handleFinishSplash = () => {
     setShowSplash(false);
     AsyncStorage.setItem('@clarity_seen_splash_v1', 'true');
   };
 
   const handlePhotoSaved = () => {
-    setCurrentView('gallery');
+    changeView('gallery');
   };
 
   const handleKeepPhoto = async (item: PhotoItem) => {
@@ -49,21 +73,21 @@ export default function App() {
         return (
           <CameraScreen
             onPhotoSaved={handlePhotoSaved}
-            onNavigateToGallery={() => setCurrentView('gallery')}
+            onNavigateToGallery={() => changeView('gallery')}
           />
         );
       case 'gallery':
         return (
           <GalleryHub
-            onBackToCamera={() => setCurrentView('camera')}
+            onBackToCamera={() => changeView('camera')}
             onSelectPhoto={(photo) => setSelectedPhoto(photo)}
-            onNavigateToInfo={() => setCurrentView('info')}
+            onNavigateToSettings={() => changeView('settings')}
           />
         );
-      case 'info':
+      case 'settings':
         return (
-          <InfoScreen
-            onBackToCamera={() => setCurrentView('gallery')}
+          <SettingsScreen
+            onBack={() => changeView('gallery')}
           />
         );
       default:
@@ -75,8 +99,18 @@ export default function App() {
     <View style={styles.container}>
       <StatusBar style="light" />
 
-      {/* Main Viewport Container */}
-      <View style={styles.viewport}>{renderCurrentView()}</View>
+      {/* Main Liquid Viewport */}
+      <Animated.View
+        style={[
+          styles.viewport,
+          {
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        {renderCurrentView()}
+      </Animated.View>
 
       {/* Fullscreen Photo Inspector Modal */}
       <PhotoDetailModal

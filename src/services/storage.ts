@@ -216,3 +216,46 @@ export async function wipeAllData(): Promise<void> {
     // Handled
   }
 }
+
+export async function batchMoveToKeepers(ids: string[]): Promise<void> {
+  const set = new Set(ids);
+  const all = await getAllPhotos();
+  for (const item of all) {
+    if (set.has(item.id)) {
+      item.status = 'keeper';
+    }
+  }
+  await saveAllPhotos(all);
+}
+
+export async function batchMoveToGrace(ids: string[]): Promise<void> {
+  const set = new Set(ids);
+  const all = await getAllPhotos();
+  const now = Date.now();
+  for (const item of all) {
+    if (set.has(item.id)) {
+      item.status = 'grace';
+      item.cryptExpiresAt = now + 24 * 60 * 60 * 1000;
+    }
+  }
+  await saveAllPhotos(all);
+}
+
+export async function batchPermanentlyDelete(ids: string[]): Promise<void> {
+  for (const id of ids) {
+    await permanentlyDelete(id);
+  }
+}
+
+export async function batchExtendLifespan(ids: string[], additionalMs: number): Promise<void> {
+  const set = new Set(ids);
+  const all = await getAllPhotos();
+  for (const item of all) {
+    if (set.has(item.id)) {
+      item.expiresAt = Math.max(Date.now(), item.expiresAt) + additionalMs;
+      item.status = 'active';
+    }
+  }
+  await saveAllPhotos(all);
+}
+
