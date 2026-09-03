@@ -31,7 +31,7 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
 }) => {
   const handlePress = () => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch {
       // Fallback
     }
@@ -53,11 +53,15 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
     >
       {({ pressed }) => (
         <View style={styles.contentWrapper}>
+          {/* Subtle top specular sheen reflection line */}
+          <View style={[styles.specularSheen, isActive && styles.specularSheenActive]} />
+
           {title ? (
             <Text
               style={[
                 styles.titleText,
                 size === 'sm' && styles.titleTextSm,
+                size === 'lg' && styles.titleTextLg,
                 isActive ? styles.titleActive : styles.titleInactive,
                 pressed && styles.titlePressed,
                 textStyle,
@@ -78,54 +82,85 @@ const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 24,
-    borderWidth: 1,
+    borderWidth: 1.5,
     overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 4,
   },
   sizeSm: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  sizeMd: {
+    minHeight: 42,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 22,
+    borderRadius: 21,
   },
-  sizeLg: {
+  sizeMd: {
+    minHeight: 52,
     paddingHorizontal: 22,
     paddingVertical: 14,
-    borderRadius: 28,
+    borderRadius: 26,
+  },
+  sizeLg: {
+    minHeight: 62,
+    paddingHorizontal: 28,
+    paddingVertical: 17,
+    borderRadius: 31,
   },
   inactiveGlass: {
-    backgroundColor: 'rgba(25, 25, 30, 0.72)',
-    borderColor: 'rgba(255, 255, 255, 0.16)',
+    backgroundColor: 'rgba(28, 28, 36, 0.85)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderTopColor: 'rgba(255, 255, 255, 0.38)',
   },
   activeGlass: {
     backgroundColor: '#FFFFFF',
     borderColor: '#FFFFFF',
+    shadowColor: '#FFFFFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
   },
   inactivePressed: {
-    backgroundColor: 'rgba(50, 50, 60, 0.9)',
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    transform: [{ scale: 0.94 }],
+    backgroundColor: 'rgba(60, 60, 75, 0.95)',
+    borderColor: 'rgba(255, 255, 255, 0.45)',
+    transform: [{ scale: 0.91 }],
   },
   activePressed: {
-    backgroundColor: 'rgba(235, 235, 240, 0.9)',
-    transform: [{ scale: 0.94 }],
+    backgroundColor: 'rgba(235, 235, 240, 0.92)',
+    transform: [{ scale: 0.91 }],
+  },
+  specularSheen: {
+    position: 'absolute',
+    top: 0,
+    left: '10%',
+    right: '10%',
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 1,
+  },
+  specularSheenActive: {
+    backgroundColor: 'transparent',
   },
   contentWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   titleText: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.8,
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   titleTextSm: {
-    fontSize: 10,
-    letterSpacing: 0.6,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  titleTextLg: {
+    fontSize: 15,
+    fontWeight: '900',
+    letterSpacing: 1.2,
   },
   titleInactive: {
     color: '#FFFFFF',

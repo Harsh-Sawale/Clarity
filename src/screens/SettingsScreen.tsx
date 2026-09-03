@@ -139,6 +139,28 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           </View>
         </View>
 
+        {/* Section 2B: Default Album View Mode */}
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>DEFAULT ALBUM LAYOUT</Text>
+          <Text style={styles.cardHelp}>Choose whether you prefer the high-density list or visual card grid.</Text>
+          <View style={styles.pillsRow}>
+            <GlassButton
+              title="LIST FORMAT"
+              size="sm"
+              isActive={settings.defaultViewMode === 'list'}
+              onPress={() => handleUpdate({ defaultViewMode: 'list' })}
+              style={styles.pillBtn}
+            />
+            <GlassButton
+              title="GRID FORMAT"
+              size="sm"
+              isActive={settings.defaultViewMode === 'grid'}
+              onPress={() => handleUpdate({ defaultViewMode: 'grid' })}
+              style={styles.pillBtn}
+            />
+          </View>
+        </View>
+
         {/* Section 3: Camera Optics */}
         <View style={styles.card}>
           <Text style={styles.cardLabel}>CAMERA SENSOR RATIO</Text>

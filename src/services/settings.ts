@@ -7,6 +7,7 @@ export interface UserSettings {
   hapticsLevel: 'off' | 'soft' | 'crisp';
   aspectRatio: '4:3' | '16:9';
   showCountdownSeconds: boolean;
+  defaultViewMode: 'list' | 'grid';
 }
 
 const SETTINGS_KEY = '@clarity_user_settings_v1';
@@ -18,6 +19,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   hapticsLevel: 'crisp',
   aspectRatio: '4:3',
   showCountdownSeconds: false,
+  defaultViewMode: 'list',
 };
 
 export async function loadUserSettings(): Promise<UserSettings> {

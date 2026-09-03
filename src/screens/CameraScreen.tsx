@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   cornerButton: {
-    minWidth: 84,
+    minWidth: 100,
   },
   bottomSection: {
     width: '100%',
@@ -269,15 +269,15 @@ const styles = StyleSheet.create({
   },
   zoomPillContainer: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(15, 15, 20, 0.8)',
-    padding: 4,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    gap: 4,
+    backgroundColor: 'rgba(15, 15, 20, 0.85)',
+    padding: 5,
+    borderRadius: 28,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    gap: 6,
   },
   zoomButton: {
-    minWidth: 44,
+    minWidth: 50,
   },
   bottomDeck: {
     flexDirection: 'row',
@@ -287,14 +287,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
   },
   sideButton: {
-    width: 88,
+    minWidth: 96,
   },
   shutterContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   sideSpacer: {
-    width: 88,
+    minWidth: 96,
   },
   permissionContainer: {
     flex: 1,
