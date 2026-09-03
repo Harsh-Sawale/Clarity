@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Colors, Spacing, Typography } from '../theme/colors';
 import { Header } from '../components/Header';
+import { GlassButton } from '../components/GlassButton';
 import { TactileButton } from '../components/TactileButton';
 import { MAINTAINER_CONFIG } from '../config/maintainer';
 import { getStorageMetrics } from '../services/storage';
@@ -47,11 +48,20 @@ export const InfoScreen: React.FC<InfoScreenProps> = ({ onBackToCamera }) => {
 
   return (
     <View style={styles.container}>
-      <Header
-        title="Info & Trust"
-        subtitle="Open Source Transparency Hub"
-        onBack={onBackToCamera}
-      />
+      <View style={styles.topHeaderBar}>
+        {onBackToCamera && (
+          <GlassButton
+            title="< BACK"
+            size="md"
+            onPress={onBackToCamera}
+            style={styles.backButton}
+          />
+        )}
+        <View style={styles.headerTextGroup}>
+          <Text style={styles.headerTitle}>INFO & TRUST</Text>
+          <Text style={styles.headerSubtitle}>Open Source Transparency Hub</Text>
+        </View>
+      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Storage Impact Metrics */}
@@ -157,6 +167,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  topHeaderBar: {
+    paddingTop: 45,
+    paddingBottom: 14,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: '#0C0C0E',
+    borderBottomWidth: 1,
+    borderBottomColor: '#202024',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backButton: {
+    minWidth: 80,
+  },
+  headerTextGroup: {
+    flex: 1,
+  },
+  headerTitle: {
+    ...Typography.caption,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 2,
+    color: '#FFFFFF',
+  },
+  headerSubtitle: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontSize: 11,
+    marginTop: 2,
   },
   scrollContent: {
     padding: Spacing.md,

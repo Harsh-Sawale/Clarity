@@ -19,9 +19,9 @@ export const MAINTAINER_CONFIG: MaintainerConfig = {
   buildNumber: '100',
   license: 'MIT',
   githubUsername: 'Harsh-Sawale',
-  repositoryName: 'clarity',
-  repositoryUrl: 'https://github.com/Harsh-Sawale/clarity',
-  issuesUrl: 'https://github.com/Harsh-Sawale/clarity/issues',
+  repositoryName: 'Clarity',
+  repositoryUrl: 'https://github.com/Harsh-Sawale/Clarity',
+  issuesUrl: 'https://github.com/Harsh-Sawale/Clarity/issues',
   authorName: 'Harsh Sawale',
   authorBio: 'Open-source software engineered for privacy, minimalism, and digital decluttering.',
 };

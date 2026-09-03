@@ -150,6 +150,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({
         facing={facing}
         enableTorch={safeTorch}
         zoom={safeZoom}
+        ratio="4:3"
       />
 
       {/* Touch-Safe HUD Overlay */}

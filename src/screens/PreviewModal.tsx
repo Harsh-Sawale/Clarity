@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Colors, Spacing, Typography } from '../theme/colors';
 import { PRESET_DURATIONS } from '../config/maintainer';
-import { TactileButton } from '../components/TactileButton';
+import { GlassButton } from '../components/GlassButton';
 
 interface PreviewModalProps {
   visible: boolean;
@@ -23,25 +23,40 @@ interface PreviewModalProps {
   onRetake: () => void;
 }
 
+type CustomUnit = 'minutes' | 'hours' | 'days';
+
 export const PreviewModal: React.FC<PreviewModalProps> = ({
   visible,
   photoUri,
   onConfirm,
   onRetake,
 }) => {
-  const [selectedDuration, setSelectedDuration] = useState<number>(PRESET_DURATIONS[1].value); // Default 2h
-  const [groupName, setGroupName] = useState<string>('');
+  const [selectedPreset, setSelectedPreset] = useState<number | 'custom'>(PRESET_DURATIONS[1].value); // Default 2h
+  const [customValue, setCustomValue] = useState<string>('12');
+  const [customUnit, setCustomUnit] = useState<CustomUnit>('hours');
   const [note, setNote] = useState<string>('');
 
   if (!photoUri) return null;
 
+  const calculateFinalDuration = (): number => {
+    if (typeof selectedPreset === 'number') {
+      return selectedPreset;
+    }
+
+    const num = Math.max(1, parseInt(customValue, 10) || 1);
+    if (customUnit === 'minutes') {
+      return Math.min(num, 60 * 24 * 7) * 60 * 1000;
+    }
+    if (customUnit === 'hours') {
+      return Math.min(num, 24 * 7) * 60 * 60 * 1000;
+    }
+    // Days: up to 7 days (1 week)
+    return Math.min(num, 7) * 24 * 60 * 60 * 1000;
+  };
+
   const handleSave = () => {
-    onConfirm(
-      selectedDuration,
-      groupName.trim() || undefined,
-      note.trim() || undefined
-    );
-    setGroupName('');
+    const durationMs = calculateFinalDuration();
+    onConfirm(durationMs, undefined, note.trim() || undefined);
     setNote('');
   };
 
@@ -52,73 +67,98 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.keyboardContainer}
         >
-          {/* Top Bar with clear safe padding */}
+          {/* Top Bar with Clear Retake Button */}
           <View style={styles.topBar}>
-            <TactileButton onPress={onRetake} style={styles.retakeButton}>
-              <Text style={styles.retakeText}>RETAKE</Text>
-            </TactileButton>
-
-            <Text style={styles.headerTitle}>INSPECT & SAVE</Text>
-
-            <View style={{ width: 70 }} />
+            <GlassButton
+              title="< RETAKE"
+              size="sm"
+              onPress={onRetake}
+              style={styles.retakeBtn}
+            />
+            <Text style={styles.headerTitle}>SCRATCH PREVIEW</Text>
+            <View style={{ width: 85 }} />
           </View>
 
-          {/* Photo Preview */}
+          {/* Large Photo Preview Box */}
           <View style={styles.previewBox}>
             <Image source={{ uri: photoUri }} style={styles.image} resizeMode="contain" />
           </View>
 
-          {/* Controls Sheet with Dedicated Separate Sections */}
+          {/* Clean, Non-Crowded Controls Drawer */}
           <View style={styles.controlsSheet}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollGap}>
-              {/* Expiration Presets */}
-              <View style={styles.sectionGroup}>
-                <Text style={styles.sectionTitle}>KEEP ACTIVE FOR</Text>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sheetScroll}>
+              {/* Lifespan Preset Pills */}
+              <View style={styles.sectionBlock}>
+                <Text style={styles.sectionLabel}>LIFESPAN DURATION</Text>
                 <View style={styles.durationRow}>
                   {PRESET_DURATIONS.map((preset) => (
-                    <TactileButton
+                    <GlassButton
                       key={preset.label}
-                      onPress={() => setSelectedDuration(preset.value)}
-                      style={[
-                        styles.durationBtn,
-                        selectedDuration === preset.value && styles.durationBtnActive,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.durationBtnText,
-                          selectedDuration === preset.value && styles.durationBtnTextActive,
-                        ]}
-                      >
-                        {preset.label}
-                      </Text>
-                    </TactileButton>
+                      title={preset.label}
+                      size="md"
+                      isActive={selectedPreset === preset.value}
+                      onPress={() => setSelectedPreset(preset.value)}
+                      style={styles.presetButton}
+                    />
                   ))}
-                </View>
-              </View>
-
-              {/* Custom User-Defined Group */}
-              <View style={styles.sectionGroup}>
-                <Text style={styles.sectionTitle}>CUSTOM GROUP / ALBUM (OPTIONAL)</Text>
-                <View style={styles.inputCard}>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="Name a group (e.g. Groceries, Work, Parking, Taxes)..."
-                    placeholderTextColor={Colors.textMuted}
-                    value={groupName}
-                    onChangeText={setGroupName}
-                    maxLength={30}
+                  <GlassButton
+                    title="CUSTOM"
+                    size="md"
+                    isActive={selectedPreset === 'custom'}
+                    onPress={() => setSelectedPreset('custom')}
+                    style={styles.presetButton}
                   />
                 </View>
               </View>
 
-              {/* Quick Note */}
-              <View style={styles.sectionGroup}>
-                <Text style={styles.sectionTitle}>ATTACH MEMO (OPTIONAL)</Text>
-                <View style={styles.inputCard}>
+              {/* Custom Timer Controls (1 min to 1 week) */}
+              {selectedPreset === 'custom' && (
+                <View style={styles.customCard}>
+                  <Text style={styles.customCardLabel}>ENTER CUSTOM TIME (1 MIN TO 1 WEEK)</Text>
+                  <View style={styles.customInputRow}>
+                    <TextInput
+                      style={styles.numberInput}
+                      keyboardType="number-pad"
+                      value={customValue}
+                      onChangeText={(txt) => setCustomValue(txt.replace(/[^0-9]/g, ''))}
+                      maxLength={4}
+                      placeholder="1"
+                      placeholderTextColor={Colors.textMuted}
+                    />
+                    <View style={styles.unitPillsRow}>
+                      <GlassButton
+                        title="MINS"
+                        size="sm"
+                        isActive={customUnit === 'minutes'}
+                        onPress={() => setCustomUnit('minutes')}
+                        style={styles.unitBtn}
+                      />
+                      <GlassButton
+                        title="HOURS"
+                        size="sm"
+                        isActive={customUnit === 'hours'}
+                        onPress={() => setCustomUnit('hours')}
+                        style={styles.unitBtn}
+                      />
+                      <GlassButton
+                        title="DAYS"
+                        size="sm"
+                        isActive={customUnit === 'days'}
+                        onPress={() => setCustomUnit('days')}
+                        style={styles.unitBtn}
+                      />
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              {/* Optional Memo Field */}
+              <View style={styles.sectionBlock}>
+                <Text style={styles.sectionLabel}>OPTIONAL MEMO</Text>
+                <View style={styles.memoCard}>
                   <TextInput
-                    style={styles.textInput}
-                    placeholder="Quick note (e.g. Row 4 near elevator, Wi-Fi code)..."
+                    style={styles.memoInput}
+                    placeholder="Add a quick note (e.g. Wi-Fi password, Pillar B4)..."
                     placeholderTextColor={Colors.textMuted}
                     value={note}
                     onChangeText={setNote}
@@ -127,12 +167,13 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                 </View>
               </View>
 
-              {/* Primary Action Button */}
-              <TactileButton
+              {/* Immersive Primary Save Button */}
+              <GlassButton
+                title="SAVE SCRATCH PHOTO"
+                size="lg"
+                isActive
                 onPress={handleSave}
-                style={styles.confirmButton}
-                textStyle={styles.confirmButtonText}
-                title="Save Scratch Photo"
+                style={styles.saveActionBtn}
               />
             </ScrollView>
           </View>
@@ -142,12 +183,12 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   );
 };
 
-const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0;
+const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 28) : 20;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#000000',
   },
   keyboardContainer: {
     flex: 1,
@@ -156,35 +197,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: statusBarHeight + 8,
+    paddingTop: statusBarHeight + 10,
     paddingBottom: 12,
     paddingHorizontal: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
+    backgroundColor: '#0A0A0C',
+    borderBottomWidth: 1,
+    borderBottomColor: '#202024',
   },
-  retakeButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  retakeText: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.6,
+  retakeBtn: {
+    minWidth: 85,
   },
   headerTitle: {
     ...Typography.caption,
-    color: Colors.textPrimary,
-    letterSpacing: 1.2,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 2,
+    fontWeight: '800',
+    fontSize: 11,
   },
   previewBox: {
     flex: 1,
-    backgroundColor: '#08080A',
+    backgroundColor: '#060608',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -193,21 +225,22 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   controlsSheet: {
-    backgroundColor: Colors.surface,
+    backgroundColor: '#0E0E12',
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: '#222228',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    maxHeight: 320,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'android' ? 24 : 16,
+    maxHeight: 330,
   },
-  scrollGap: {
-    gap: 12,
-    paddingBottom: 16,
+  sheetScroll: {
+    gap: 14,
+    paddingBottom: 12,
   },
-  sectionGroup: {
+  sectionBlock: {
     gap: 6,
   },
-  sectionTitle: {
+  sectionLabel: {
     ...Typography.badge,
     color: Colors.textMuted,
     fontSize: 10,
@@ -215,53 +248,66 @@ const styles = StyleSheet.create({
   },
   durationRow: {
     flexDirection: 'row',
+    gap: 6,
+  },
+  presetButton: {
+    flex: 1,
+  },
+  customCard: {
+    backgroundColor: '#16161C',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#2A2A34',
     gap: 8,
   },
-  durationBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surfaceElevated,
-    alignItems: 'center',
-  },
-  durationBtnActive: {
-    borderColor: Colors.textPrimary,
-    backgroundColor: Colors.textPrimary,
-  },
-  durationBtnText: {
-    fontSize: 13,
+  customCardLabel: {
+    ...Typography.caption,
+    fontSize: 10,
     fontWeight: '700',
     color: Colors.textSecondary,
-    letterSpacing: 0.4,
+    letterSpacing: 0.6,
   },
-  durationBtnTextActive: {
-    color: Colors.background,
+  customInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
-  inputCard: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: Spacing.sm,
-  },
-  textInput: {
+  numberInput: {
+    width: 60,
     height: 42,
-    color: Colors.textPrimary,
+    backgroundColor: '#0A0A0E',
+    borderWidth: 1,
+    borderColor: '#32323E',
+    borderRadius: 10,
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  unitPillsRow: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+  },
+  unitBtn: {
+    flex: 1,
+  },
+  memoCard: {
+    backgroundColor: '#16161C',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2A2A34',
+    paddingHorizontal: 12,
+  },
+  memoInput: {
+    height: 44,
+    color: '#FFFFFF',
     fontSize: 13,
   },
-  confirmButton: {
-    backgroundColor: Colors.textPrimary,
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: 'center',
+  saveActionBtn: {
     marginTop: 4,
-  },
-  confirmButtonText: {
-    color: Colors.background,
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.2,
+    borderRadius: 16,
+    paddingVertical: 16,
   },
 });
