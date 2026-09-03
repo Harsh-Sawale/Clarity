@@ -1,23 +1,39 @@
 {
   "expo": {
-    "name": "zyrmet-essentials-site",
-    "slug": "zyrmet-essentials-site",
+    "name": "Clarity",
+    "slug": "clarity",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#000000",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow Clarity to access your camera to capture temporary visual scratch notes."
+      }
     },
     "android": {
+      "package": "org.clarity.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "predictiveBackGestureEnabled": false
     },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Clarity to access your camera to capture temporary visual scratch notes."
+        }
+      ]
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     }
