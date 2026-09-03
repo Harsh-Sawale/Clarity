@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CameraScreen } from './src/screens/CameraScreen';
 import { GalleryHub } from './src/screens/GalleryHub';
 import { InfoScreen } from './src/screens/InfoScreen';
@@ -12,9 +13,23 @@ import { moveToKeepers, permanentlyDelete } from './src/services/storage';
 type ActiveView = 'camera' | 'gallery' | 'info';
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState<boolean>(true);
+  const [showSplash, setShowSplash] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<ActiveView>('camera');
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
+
+  useEffect(() => {
+    // Only display opening splash ONCE on first-ever launch
+    AsyncStorage.getItem('@clarity_seen_splash_v1').then((seen) => {
+      if (!seen) {
+        setShowSplash(true);
+      }
+    });
+  }, []);
+
+  const handleFinishSplash = () => {
+    setShowSplash(false);
+    AsyncStorage.setItem('@clarity_seen_splash_v1', 'true');
+  };
 
   const handlePhotoSaved = () => {
     setCurrentView('gallery');
@@ -35,7 +50,6 @@ export default function App() {
           <CameraScreen
             onPhotoSaved={handlePhotoSaved}
             onNavigateToGallery={() => setCurrentView('gallery')}
-            onNavigateToInfo={() => setCurrentView('info')}
           />
         );
       case 'gallery':
@@ -43,12 +57,13 @@ export default function App() {
           <GalleryHub
             onBackToCamera={() => setCurrentView('camera')}
             onSelectPhoto={(photo) => setSelectedPhoto(photo)}
+            onNavigateToInfo={() => setCurrentView('info')}
           />
         );
       case 'info':
         return (
           <InfoScreen
-            onBackToCamera={() => setCurrentView('camera')}
+            onBackToCamera={() => setCurrentView('gallery')}
           />
         );
       default:
@@ -71,8 +86,8 @@ export default function App() {
         onDelete={handleDeletePhoto}
       />
 
-      {/* Cinematic Opening Splash Screen */}
-      {showSplash && <IntroSplash onFinish={() => setShowSplash(false)} />}
+      {/* Opening Intro Splash Sequence - Only shown once ever */}
+      {showSplash && <IntroSplash onFinish={handleFinishSplash} />}
     </View>
   );
 }

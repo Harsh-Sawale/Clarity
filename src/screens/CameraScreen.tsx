@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   Platform,
   StatusBar as RNStatusBar,
+  GestureResponderEvent,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Colors, Spacing, Typography } from '../theme/colors';
@@ -19,22 +20,22 @@ type CameraFacing = 'front' | 'back';
 interface CameraScreenProps {
   onPhotoSaved: () => void;
   onNavigateToGallery: () => void;
-  onNavigateToInfo: () => void;
 }
 
 export const CameraScreen: React.FC<CameraScreenProps> = ({
   onPhotoSaved,
   onNavigateToGallery,
-  onNavigateToInfo,
 }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<CameraFacing>('back');
   const [torch, setTorch] = useState<boolean>(false);
-  const [zoom, setZoom] = useState<number>(0); // 0 = 1x, 0.35 = 2x, 0.7 = 3x
+  const [zoom, setZoom] = useState<number>(0);
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
 
   const cameraRef = useRef<CameraView>(null);
+  const initialDistance = useRef<number | null>(null);
+  const initialZoom = useRef<number>(0);
 
   if (!permission) {
     return <View style={styles.darkBackground} />;
@@ -60,6 +61,29 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({
       </SafeAreaView>
     );
   }
+
+  // Two-Finger Pinch-to-Zoom Gesture Handlers
+  const handleTouchStart = (e: GestureResponderEvent) => {
+    if (e.nativeEvent.touches.length === 2) {
+      const [t1, t2] = e.nativeEvent.touches;
+      initialDistance.current = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+      initialZoom.current = zoom;
+    }
+  };
+
+  const handleTouchMove = (e: GestureResponderEvent) => {
+    if (e.nativeEvent.touches.length === 2 && initialDistance.current !== null) {
+      const [t1, t2] = e.nativeEvent.touches;
+      const currentDistance = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+      const delta = (currentDistance - initialDistance.current) / 300;
+      const newZoom = Math.max(0, Math.min(1, initialZoom.current + delta));
+      setZoom(newZoom);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    initialDistance.current = null;
+  };
 
   const handleCapture = async () => {
     if (!cameraRef.current || isCapturing) return;
@@ -103,74 +127,82 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({
   };
 
   const toggleFacing = () => {
-    setFacing((prev: CameraFacing) => (prev === 'back' ? 'front' : 'back'));
+    setFacing((prev: CameraFacing) => {
+      const next = prev === 'back' ? 'front' : 'back';
+      if (next === 'front') setTorch(false); // Front cameras do not support hardware torch
+      return next;
+    });
   };
 
+  const safeTorch = facing === 'back' ? torch : false;
+  const safeZoom = Math.max(0, Math.min(1, zoom));
+
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <CameraView
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
         facing={facing}
-        enableTorch={torch}
-        zoom={zoom}
+        enableTorch={safeTorch}
+        zoom={safeZoom}
       />
 
-      {/* Touch-safe HUD Overlay with pointerEvents="box-none" */}
+      {/* Touch-Safe HUD Overlay */}
       <View style={styles.hudOverlay} pointerEvents="box-none">
-        {/* Top Control Bar with Notch Clearance */}
+        {/* Top Bar: Torch on Far Left, Flip on Far Right (Zero Collisions) */}
         <View style={styles.topBar} pointerEvents="box-none">
           <GlassButton
-            title={torch ? 'TORCH ON' : 'TORCH'}
-            isActive={torch}
+            title={safeTorch ? 'TORCH ON' : 'TORCH'}
+            isActive={safeTorch}
             onPress={toggleTorch}
             size="md"
-            style={styles.topButton}
+            style={styles.cornerButton}
           />
-
-          <View style={styles.brandPill}>
-            <Text style={styles.brandText}>CLARITY</Text>
-          </View>
 
           <GlassButton
             title="FLIP"
             onPress={toggleFacing}
             size="md"
-            style={styles.topButton}
+            style={styles.cornerButton}
           />
         </View>
 
-        {/* Bottom Section: Zoom Selector + Floating Glass Control Island */}
+        {/* Bottom Section: Zoom Bar + Shutter + Gallery Jump */}
         <View style={styles.bottomSection} pointerEvents="box-none">
-          {/* Zoom Selector Bar (1x, 2x, 3x) */}
+          {/* Zoom Selector Bar (1x, 2x, 3x) + Pinch Indicator */}
           <View style={styles.zoomPillContainer} pointerEvents="auto">
             <GlassButton
               title="1x"
               size="sm"
-              isActive={zoom === 0}
+              isActive={safeZoom < 0.2}
               onPress={() => setZoom(0)}
               style={styles.zoomButton}
             />
             <GlassButton
               title="2x"
               size="sm"
-              isActive={zoom === 0.35}
+              isActive={safeZoom >= 0.2 && safeZoom < 0.55}
               onPress={() => setZoom(0.35)}
               style={styles.zoomButton}
             />
             <GlassButton
               title="3x"
               size="sm"
-              isActive={zoom === 0.7}
+              isActive={safeZoom >= 0.55}
               onPress={() => setZoom(0.7)}
               style={styles.zoomButton}
             />
           </View>
 
-          {/* Floating Control Deck: Gallery, Shutter, Info */}
+          {/* Bottom Deck: Gallery on Left, Shutter in Center, Balanced Spacer on Right */}
           <View style={styles.bottomDeck} pointerEvents="auto">
             <GlassButton
-              title="GALLERY"
+              title="VAULT"
               size="md"
               onPress={onNavigateToGallery}
               style={styles.sideButton}
@@ -180,12 +212,8 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({
               <ShutterButton onPress={handleCapture} disabled={isCapturing} />
             </View>
 
-            <GlassButton
-              title="INFO"
-              size="md"
-              onPress={onNavigateToInfo}
-              style={styles.sideButton}
-            />
+            {/* Balancer Spacer so shutter stays dead-center with zero collision */}
+            <View style={styles.sideSpacer} />
           </View>
         </View>
       </View>
@@ -219,7 +247,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     justifyContent: 'space-between',
-    paddingTop: statusBarHeight + 14,
+    paddingTop: statusBarHeight + 12,
     paddingBottom: Platform.OS === 'android' ? 36 : 28,
     paddingHorizontal: Spacing.md,
     zIndex: 10,
@@ -230,22 +258,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
-  topButton: {
-    minWidth: 90,
-  },
-  brandPill: {
-    backgroundColor: 'rgba(15, 15, 20, 0.75)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  brandText: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 4,
-    color: '#E4E4E7',
+  cornerButton: {
+    minWidth: 84,
   },
   bottomSection: {
     width: '100%',
@@ -272,11 +286,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
   },
   sideButton: {
-    width: 92,
+    width: 88,
   },
   shutterContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  sideSpacer: {
+    width: 88,
   },
   permissionContainer: {
     flex: 1,

@@ -29,11 +29,13 @@ type SubTab = 'active' | 'grace' | 'keeper';
 interface GalleryHubProps {
   onBackToCamera: () => void;
   onSelectPhoto: (item: PhotoItem) => void;
+  onNavigateToInfo?: () => void;
 }
 
 export const GalleryHub: React.FC<GalleryHubProps> = ({
   onBackToCamera,
   onSelectPhoto,
+  onNavigateToInfo,
 }) => {
   const [currentTab, setCurrentTab] = useState<SubTab>('active');
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
@@ -126,7 +128,16 @@ export const GalleryHub: React.FC<GalleryHubProps> = ({
             style={styles.backBtn}
           />
           <Text style={styles.hubTitle}>VAULT & ALBUMS</Text>
-          <View style={{ width: 85 }} />
+          {onNavigateToInfo ? (
+            <GlassButton
+              title="INFO"
+              size="sm"
+              onPress={onNavigateToInfo}
+              style={styles.infoBtn}
+            />
+          ) : (
+            <View style={{ width: 65 }} />
+          )}
         </View>
 
         {/* Liquid Glass Segment Slider */}
@@ -286,6 +297,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 2,
     color: '#FFFFFF',
+  },
+  infoBtn: {
+    minWidth: 65,
   },
   tabBar: {
     flexDirection: 'row',
